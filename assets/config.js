@@ -9,9 +9,9 @@ window.SITE_CONFIG = {
   repo: "music",                       // GitHub 仓库名（部署时自动替换）
   branch: "main",
   // 后台管理密码的 SHA-256 十六进制值（后台登录只需密码，无需令牌）
-  adminHash: "bd525599498df60268ef656229e3692dc31bb388dc9abe1fde0120a8a9203282",
+  adminHash: "8b2b857ce04ac73d00f5e1ed583ede094c9eba193cde0c375494ee09a359afd3",
   // 上传令牌的加密存储（用管理密码加密，登录时自动解密使用）
-  patEnc: {"salt":"fD7oSfPIZMdH6L5espkFVg==","iv":"OCacDyzseAha9A3k","data":"511sCaO7Ao74cAIewMy8ENzQgPZDrRGM71mIEO/kCHvvCyczLJMqL4mGpcHmhYGgbI8Q13TLwpI="},
+  patEnc: {"salt":"PGX1FNkEb+/zAz+HxKscCQ==","iv":"7xD8cCtFSmUBxrlt","data":"sCl59JaY+to8nr3f0bGdpyiZBTzuEVPRwmcNkno0EJCMEg79JxQt+D4HCUfuMTRyDiWVu96MHMs="},
   contact: "如需下载「客户音乐」，请联系管理员获取",
   maxFileMB: 19,                       // 免费 CDN 单文件上限，建议 MP3 格式
   cats: [
