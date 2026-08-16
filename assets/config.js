@@ -11,7 +11,7 @@ window.SITE_CONFIG = {
   // 后台管理密码的 SHA-256 十六进制值（后台登录只需密码，无需令牌）
   adminHash: "bd525599498df60268ef656229e3692dc31bb388dc9abe1fde0120a8a9203282",
   // 上传令牌的加密存储（用管理密码加密，登录时自动解密使用）
-  patEnc: {"salt":"1FDrz2MT7/so5fzUnPgCKQ==","iv":"QpE8fUJV4z/3R2ch","data":"YYvzWN7zAtYXvc4da8NUu4PKlEfW1QMrVFKntXr7YZxEdGct1itfxVgEbF3/Pk/daXqRE/d/Rtyq52+ESl8B4R0XrjUrrhvTzocMURcHDEC39BQ7OG74belSlk11pDLO7qyUGvpdeGLq2TWTFA=="},
+  patEnc: {"salt":"fD7oSfPIZMdH6L5espkFVg==","iv":"OCacDyzseAha9A3k","data":"511sCaO7Ao74cAIewMy8ENzQgPZDrRGM71mIEO/kCHvvCyczLJMqL4mGpcHmhYGgbI8Q13TLwpI="},
   contact: "如需下载「客户音乐」，请联系管理员获取",
   maxFileMB: 19,                       // 免费 CDN 单文件上限，建议 MP3 格式
   cats: [
