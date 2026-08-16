@@ -75,15 +75,13 @@
   function renderGrid() {
     const grid = $("#grid");
     const list = songs.filter((s) => s.cat === curCat);
-    $("#notice").hidden = curCat !== "customer";
-    $("#noticeText").textContent = "「客户音乐」仅支持在线试听。如需下载，请联系管理员：" + (cfg.contact || "见页脚联系方式");
+    $("#notice").hidden = true;
     if (!list.length) {
       grid.innerHTML = '<div class="loading">本栏目暂无音乐，敬请期待</div>';
       return;
     }
     grid.innerHTML = list.map((s) => {
       const isPlaying = playingId === s.id;
-      const locked = s.cat === "customer";
       const icon = ICONS[s.cat] || ICONS.bgm;
       return (
         '<div class="card' + (isPlaying ? " playing" : "") + '" data-id="' + esc(s.id) + '">' +
@@ -100,9 +98,7 @@
           "</div>" +
           '<div class="track-actions">' +
             '<button class="btn btn-play" data-play="' + esc(s.id) + '" aria-label="播放/暂停">' + (isPlaying ? ICONS.pause : ICONS.play) + "</button>" +
-            (locked
-              ? '<button class="btn btn-lock" data-hint="' + esc(s.id) + '">' + ICONS.lock + " 仅试听</button>"
-              : '<button class="btn btn-dl" data-dl="' + esc(s.id) + '">' + ICONS.download + " 下载</button>") +
+            '<button class="btn btn-dl" data-dl="' + esc(s.id) + '">' + ICONS.download + " 下载</button>" +
           "</div>" +
         "</div>"
       );
@@ -113,9 +109,6 @@
     });
     grid.querySelectorAll("[data-dl]").forEach((b) => {
       b.addEventListener("click", () => download(b.getAttribute("data-dl"), b));
-    });
-    grid.querySelectorAll("[data-hint]").forEach((b) => {
-      b.addEventListener("click", () => toast("「客户音乐」仅供试听。如需下载请联系管理员：" + (cfg.contact || "见页脚")));
     });
   }
 
@@ -212,7 +205,7 @@
   /* ---------- 下载（带进度） ---------- */
   async function download(id, btn) {
     const s = byId(id);
-    if (!s || s.cat === "customer") return;
+    if (!s) return;
     const orig = btn.innerHTML;
     btn.disabled = true;
     btn.textContent = "下载中 0%";
