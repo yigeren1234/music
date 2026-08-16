@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0d12">
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<title>悦音 · 后台管理</title>
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/admin.css">
+</head>
+<body class="admin-body">
+
+<!-- 登录门 -->
+<div class="gate" id="gate">
+  <div class="gate-card">
+    <div class="gate-mark">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 18.5a3 3 0 1 1-2-2.83V5.6a1 1 0 0 1 .76-.97l9-2.25A1 1 0 0 1 18 3.35v10.82a3 3 0 1 1-2-2.83V7.28l-7 1.75v9.47z"/></svg>
+    </div>
+    <h1 class="gate-title">后台管理</h1>
+    <p class="gate-sub">仅限管理员 · 请输入管理密码</p>
+    <input type="password" id="gatePw" class="input" placeholder="管理密码" autocomplete="current-password">
+    <button class="btn btn-accent btn-block btn-lg" id="gateBtn">进入后台</button>
+    <p class="gate-err" id="gateErr"></p>
+    <a class="gate-back" href="index.html">← 返回首页</a>
+  </div>
+</div>
+
+<!-- 令牌门（仅线上模式、本机未保存令牌时出现） -->
+<div class="gate" id="patGate" hidden>
+  <div class="gate-card">
+    <div class="gate-mark ok">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3a5 5 0 0 1 5 5v1h1a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2h1V8a5 5 0 0 1 5-5zm0 2a3 3 0 0 0-3 3v1h6V8a3 3 0 0 0-3-3z"/></svg>
+    </div>
+    <h1 class="gate-title">连接您的音乐空间</h1>
+    <p class="gate-sub">上传 / 删除音乐需要 GitHub 访问令牌。<br>令牌仅保存在<b>当前这台设备的浏览器</b>中，不会上传到任何服务器。</p>
+    <textarea id="patInput" class="input pat-input" placeholder="粘贴 GitHub Token（ghp_ 开头）"></textarea>
+    <button class="btn btn-accent btn-block btn-lg" id="patSave">保存令牌并进入后台</button>
+    <details class="pat-help">
+      <summary>如何获取令牌？（还没有 GitHub 账号？点这里看步骤）</summary>
+      <ol>
+        <li>用电脑或手机浏览器打开 <b>github.com</b>，注册账号并登录（免费）。</li>
+        <li>点击右上角头像 → <b>Settings</b> → <b>Developer settings</b> → <b>Personal access tokens</b> → <b>Tokens (classic)</b>。</li>
+        <li>点 <b>Generate new token (classic)</b>，Expiration 选 90 天即可，只勾选 <b>public_repo</b> 一项。</li>
+        <li>拉到最下面点 <b>Generate token</b>，复制 <b>ghp_</b> 开头的令牌，粘贴到上面输入框。</li>
+      </ol>
+    </details>
+    <a class="gate-back" href="index.html">← 返回首页</a>
+  </div>
+</div>
+
+<!-- 主界面 -->
+<div class="wrap" id="main" hidden>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="index.html">
+        <span class="brand-mark">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 18.5a3 3 0 1 1-2-2.83V5.6a1 1 0 0 1 .76-.97l9-2.25A1 1 0 0 1 18 3.35v10.82a3 3 0 1 1-2-2.83V7.28l-7 1.75v9.47z"/></svg>
+        </span>
+        <span class="brand-name">悦音 · 后台</span>
+      </a>
+      <div class="top-actions">
+        <button class="btn btn-ghost" id="setBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.01a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55h.01a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.01a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/></svg>
+          设置</button>
+        <button class="btn btn-ghost" id="logoutBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+          退出</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="admin-main">
+    <section class="card upload-card">
+      <h2 class="card-title">上传音乐</h2>
+      <p class="card-hint">支持 MP3 / WAV / M4A / FLAC 等音频格式，单文件不超过 19MB（免费 CDN 限制，建议用 MP3）。</p>
+      <label class="drop" id="drop">
+        <input type="file" id="fileInput" accept="audio/*" hidden>
+        <span class="drop-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+        </span>
+        <span class="drop-text" id="dropText">点击选择音频文件</span>
+      </label>
+      <div class="file-meta" id="fileMeta" hidden></div>
+      <div class="form-row">
+        <input type="text" id="titleInput" class="input" placeholder="曲目名称（如：宣传片背景音乐）">
+      </div>
+      <div class="form-row">
+        <select id="catSelect" class="input">
+          <option value="bgm">背景音乐</option>
+          <option value="female">女声</option>
+          <option value="male">男声</option>
+          <option value="customer">客户音乐</option>
+        </select>
+      </div>
+      <button class="btn btn-accent btn-block btn-lg" id="uploadBtn" disabled>上传到「背景音乐」</button>
+      <div class="progress" id="progress" hidden><div class="progress-fill" id="progressFill"></div></div>
+    </section>
+
+    <section class="card list-card">
+      <div class="list-head">
+        <div class="admin-tabs" id="adminTabs">
+          <button class="atab active" data-cat="bgm">背景音乐</button>
+          <button class="atab" data-cat="female">女声</button>
+          <button class="atab" data-cat="male">男声</button>
+          <button class="atab" data-cat="customer">客户音乐</button>
+        </div>
+      </div>
+      <div class="admin-list" id="list"><div class="empty">正在载入…</div></div>
+    </section>
+  </main>
+</div>
+
+<!-- 设置弹层 -->
+<div class="settings" id="settings" hidden>
+  <div class="settings-card card">
+    <h2 class="card-title">设置</h2>
+    <div class="set-group">
+      <label>音乐空间</label>
+      <p class="set-info" id="repoInfo">—</p>
+    </div>
+    <div class="set-group" id="patGroup" hidden>
+      <label>GitHub 令牌（仅保存在本机浏览器）</label>
+      <input type="password" id="patInput2" class="input" placeholder="ghp_...">
+      <button class="btn btn-ghost" id="patSave2">保存令牌</button>
+    </div>
+    <div class="set-group">
+      <label>修改本机后台密码</label>
+      <input type="password" id="newPw1" class="input" placeholder="新密码（至少 6 位）">
+      <input type="password" id="newPw2" class="input" placeholder="再输入一次">
+      <button class="btn btn-ghost" id="pwSave">修改密码</button>
+    </div>
+    <p class="set-note">说明：密码与令牌仅保存在当前这台设备的浏览器中，换设备后需重新输入。默认密码为 admin888（部署时可自定义）。忘记令牌可在 GitHub 重新生成后回来更新。</p>
+    <button class="btn btn-block" id="setClose">关闭</button>
+  </div>
+</div>
+
+<audio id="preview" preload="none"></audio>
+
+<script src="assets/config.js"></script>
+<script src="assets/sha256.js"></script>
+<script src="assets/admin.js"></script>
+</body>
+</html>
