@@ -1,0 +1,23 @@
+{
+  "updated": 1786891942062,
+  "songs": [
+    {
+      "id": "seed-bgm",
+      "title": "演示曲 · 轻柔氛围（可删除）",
+      "cat": "bgm",
+      "file": "music/demo-bgm.wav",
+      "size": 529244,
+      "dur": 12,
+      "up": 1786891393991
+    },
+    {
+      "id": "seed-female",
+      "title": "演示曲 · 女声小样（可删除）",
+      "cat": "female",
+      "file": "music/demo-female.wav",
+      "size": 529244,
+      "dur": 12,
+      "up": 1786891393991
+    }
+  ]
+}
