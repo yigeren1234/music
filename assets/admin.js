@@ -16,6 +16,38 @@
 
   const TOKEN_RE = /^(gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})$/;
 
+  /* ---------- 令牌加解密（PBKDF2-SHA256 + AES-256-GCM，与 encrypt-pat.mjs 一致） ---------- */
+  const b64ToBuf = (b64) => Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+  const bufToB64 = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf)));
+  async function deriveAesKey(password, salt) {
+    const enc = new TextEncoder();
+    const km = await crypto.subtle.importKey("raw", enc.encode(password), "PBKDF2", false, ["deriveKey"]);
+    return crypto.subtle.deriveKey(
+      { name: "PBKDF2", salt: b64ToBuf(salt), iterations: 120000, hash: "SHA-256" },
+      km, { name: "AES-GCM", length: 256 }, false, ["encrypt", "decrypt"]
+    );
+  }
+  async function decryptPat(password) {
+    const c = cfg.patEnc;
+    const key = await deriveAesKey(password, c.salt);
+    const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: b64ToBuf(c.iv) }, key, b64ToBuf(c.data));
+    return new TextDecoder().decode(pt);
+  }
+  async function encryptPat(password, token) {
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const key = await deriveAesKey2(password, salt);
+    const data = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, new TextEncoder().encode(token));
+    return { salt: bufToB64(salt), iv: bufToB64(iv), data: bufToB64(data) };
+  }
+  async function deriveAesKey2(password, saltBytes) {
+    const km = await crypto.subtle.importKey("raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveKey"]);
+    return crypto.subtle.deriveKey(
+      { name: "PBKDF2", salt: saltBytes, iterations: 120000, hash: "SHA-256" },
+      km, { name: "AES-GCM", length: 256 }, false, ["encrypt"]
+    );
+  }
+
   /* ---------- 工具 ---------- */
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const fmtDur = (s) => { if (!s || !isFinite(s) || s <= 0) return "--:--"; s = Math.round(s); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
@@ -390,11 +422,21 @@
     loadIndex();
   }
 
-  $("#gateBtn").addEventListener("click", () => {
+  $("#gateBtn").addEventListener("click", async () => {
     const pw = $("#gatePw").value;
     const h = sha256(pw);
     const localHash = localStorage.getItem("pwhash");
     if (h === cfg.adminHash || (localHash && h === localHash)) {
+      // 密码正确：若尚未持有令牌且配置了加密令牌，用密码自动解密
+      if (!pat && cfg.patEnc && !IS_LOCAL) {
+        try {
+          pat = await decryptPat(pw);
+          localStorage.setItem("pat", pat);
+        } catch (e) {
+          $("#gateErr").textContent = "登录配置异常，请联系管理员更新令牌";
+          return;
+        }
+      }
       authed = true;
       sessionStorage.setItem("admin_ok", "1");
       $("#gateErr").textContent = "";
@@ -419,7 +461,7 @@
 
   $("#setBtn").addEventListener("click", () => {
     $("#settings").hidden = false;
-    $("#patGroup").hidden = IS_LOCAL;
+    $("#patGroup").hidden = IS_LOCAL || !!cfg.patEnc;
     $("#repoInfo").innerHTML = "仓库：<b>" + esc(cfg.owner) + " / " + esc(cfg.repo) + "</b><br>首页地址：" + (IS_LOCAL ? "本地模式" : esc(cfg.pagesBase));
   });
   $("#setClose").addEventListener("click", () => { $("#settings").hidden = true; });
@@ -431,13 +473,32 @@
     $("#patInput2").value = "";
     toast("令牌已保存");
   });
-  $("#pwSave").addEventListener("click", () => {
+  $("#pwSave").addEventListener("click", async () => {
     const a = $("#newPw1").value, b = $("#newPw2").value;
     if (a.length < 6) { toast("新密码至少 6 位"); return; }
     if (a !== b) { toast("两次输入的密码不一致"); return; }
-    localStorage.setItem("pwhash", sha256(a));
+    const newHash = sha256(a);
+    // 加密令牌模式下：用新密码重新加密令牌并同步到云端，换设备也能用新密码登录
+    if (cfg.patEnc && !IS_LOCAL && pat) {
+      try {
+        const enc = await encryptPat(a, pat);
+        const j = await ghApi(ghPath("assets/config.js") + "?ref=" + cfg.branch, "GET", null, true);
+        if (!j) { toast("云端配置读取失败，密码未修改"); return; }
+        let cfgText = decodeB64(j.content);
+        cfgText = cfgText.replace(/patEnc:\s*\{[^}]*\}/, "patEnc: " + JSON.stringify(enc));
+        cfgText = cfgText.replace(/adminHash:\s*"[^"]*"/, 'adminHash: "' + newHash + '"');
+        await ghApi(ghPath("assets/config.js"), "PUT", {
+          message: "update admin password", content: encodeB64(cfgText), sha: j.sha, branch: cfg.branch
+        });
+        purge();
+      } catch (e) {
+        toast("云端同步失败：" + e.message);
+        return;
+      }
+    }
+    localStorage.setItem("pwhash", newHash);
     $("#newPw1").value = ""; $("#newPw2").value = "";
-    toast("密码已修改（仅本机生效）");
+    toast(cfg.patEnc && !IS_LOCAL ? "密码已修改并同步到云端" : "密码已修改（仅本机生效）");
   });
   $("#logoutBtn").addEventListener("click", () => {
     sessionStorage.removeItem("admin_ok");
