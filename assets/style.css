@@ -1,5 +1,6 @@
 /* ============ 悦音 · 全局样式 ============ */
 :root{
+  color-scheme: dark;
   --bg:#0b0d12; --bg2:#10141c; --card:#141a24; --card2:#18202c;
   --line:rgba(255,255,255,.07); --line2:rgba(255,255,255,.15);
   --text:#eef1f6; --muted:#8f99ab;
