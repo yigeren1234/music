@@ -8,8 +8,10 @@ window.SITE_CONFIG = {
   owner: "yigeren1234",      // GitHub 用户名（部署时自动替换）
   repo: "music",                       // GitHub 仓库名（部署时自动替换）
   branch: "main",
-  // 后台管理密码的 SHA-256 十六进制值。默认密码：admin888（部署时可自定义）
-  adminHash: "aaffebecec560fec66e75f24062224ffa4e07696d2ae9a1fee3707c3f8fd9373",
+  // 后台管理密码的 SHA-256 十六进制值（后台登录只需密码，无需令牌）
+  adminHash: "bd525599498df60268ef656229e3692dc31bb388dc9abe1fde0120a8a9203282",
+  // 上传令牌的加密存储（用管理密码加密，登录时自动解密使用）
+  patEnc: {"salt":"1FDrz2MT7/so5fzUnPgCKQ==","iv":"QpE8fUJV4z/3R2ch","data":"YYvzWN7zAtYXvc4da8NUu4PKlEfW1QMrVFKntXr7YZxEdGct1itfxVgEbF3/Pk/daXqRE/d/Rtyq52+ESl8B4R0XrjUrrhvTzocMURcHDEC39BQ7OG74belSlk11pDLO7qyUGvpdeGLq2TWTFA=="},
   contact: "如需下载「客户音乐」，请联系管理员获取",
   maxFileMB: 19,                       // 免费 CDN 单文件上限，建议 MP3 格式
   cats: [
