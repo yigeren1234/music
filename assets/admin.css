@@ -34,7 +34,8 @@
 }
 .input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(232,180,90,.15)}
 .input::placeholder{color:#5b6472}
-select.input{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238f99ab' stroke-width='2.4' stroke-linecap='round'><path d='M6 9l6 6 6-6'/></svg>");background-repeat:no-repeat;background-position:right 14px center;padding-right:38px}
+select.input{appearance:none;-webkit-appearance:none;color-scheme:dark;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238f99ab' stroke-width='2.4' stroke-linecap='round'><path d='M6 9l6 6 6-6'/></svg>");background-repeat:no-repeat;background-position:right 14px center;padding-right:38px}
+select.input option{background:#141a24;color:#eef1f6}
 .btn-block{width:100%}
 .btn-lg{height:52px;font-size:16px}
 .btn-accent{background:linear-gradient(135deg,var(--accent),#d68a3c);color:#221708;font-weight:800;letter-spacing:.04em;box-shadow:0 4px 16px rgba(232,180,90,.28)}
