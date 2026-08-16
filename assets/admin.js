@@ -13,6 +13,7 @@
   let pickFile = null;
   let pickDur = 0;
   let previewId = null;
+  let uploading = false;
 
   const TOKEN_RE = /^(gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})$/;
 
@@ -72,6 +73,7 @@
     pause: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h4v14H7V5zm6 0h4v14h-4V5z"/></svg>',
     note: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 18.5a3 3 0 1 1-2-2.83V5.6a1 1 0 0 1 .76-.97l9-2.25A1 1 0 0 1 18 3.35v10.82a3 3 0 1 1-2-2.83V7.28l-7 1.75v9.47z"/></svg>',
     download: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>',
+    edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>',
     trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>'
   };
 
@@ -170,6 +172,7 @@
             '<div class="row-meta">' + fmtDur(s.dur) + " · " + fmtSize(s.size) + " · " + fmtDate(s.up) + "</div>" +
           "</div>" +
           '<div class="row-actions">' +
+            '<button class="btn btn-ghost btn-sm" data-ren="' + esc(s.id) + '">' + ICONS.edit + " 改名</button>" +
             '<button class="btn btn-ghost btn-sm" data-dl="' + esc(s.id) + '">' + ICONS.download + " 下载</button>" +
             '<button class="btn btn-danger btn-sm" data-del="' + esc(s.id) + '">' + ICONS.trash + " 删除</button>" +
           "</div>" +
@@ -179,6 +182,8 @@
 
     list.querySelectorAll("[data-play]").forEach((b) =>
       b.addEventListener("click", () => togglePreview(b.getAttribute("data-play"))));
+    list.querySelectorAll("[data-ren]").forEach((b) =>
+      b.addEventListener("click", () => renameSong(b.getAttribute("data-ren"))));
     list.querySelectorAll("[data-dl]").forEach((b) =>
       b.addEventListener("click", () => adminDownload(b.getAttribute("data-dl"), b)));
     list.querySelectorAll("[data-del]").forEach((b) =>
@@ -292,6 +297,7 @@
         fileMeta.innerHTML = "<span>大小：<b>" + fmtSize(f.size) + "</b></span><span>时长：<b>" + fmtDur(d) + "</b></span>";
       }
     });
+    doUpload(); // 选择文件后自动上传，无需再点按钮
   }
 
   function readDuration(f) {
@@ -325,8 +331,9 @@
     progressFill.style.width = "0%";
   }
 
-  uploadBtn.addEventListener("click", async () => {
-    if (!pickFile) return;
+  async function doUpload() {
+    if (!pickFile || uploading) return;
+    uploading = true;
     const f = pickFile;
     const title = titleInput.value.trim() || f.name.replace(/\.[^.]+$/, "");
     const cat = catSelect.value;
@@ -362,17 +369,47 @@
     } catch (e) {
       toast(e.message || "上传失败");
       setUploading(false, "上传到「" + catName() + "」");
+    } finally {
+      uploading = false;
     }
-  });
+  }
+  uploadBtn.addEventListener("click", () => doUpload());
 
   function resetForm() {
     pickFile = null; pickDur = 0;
     fileInput.value = "";
     titleInput.value = "";
-    dropText.textContent = "点击选择音频文件";
+    dropText.textContent = "点击选择音频文件（选好栏目后自动上传）";
     drop.classList.remove("has");
     fileMeta.hidden = true;
     setUploading(false, "上传到「" + catName() + "」");
+  }
+
+  /* ---------- 改名 ---------- */
+  async function renameSong(id) {
+    const s = songs.find((x) => x.id === id);
+    if (!s) return;
+    const t = prompt("修改曲目名称：", s.title);
+    if (!t || !t.trim()) return;
+    const newTitle = t.trim().slice(0, 200);
+    try {
+      if (IS_LOCAL) {
+        const r = await fetch("/local/rename", {
+          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, title: newTitle })
+        });
+        if (!r.ok) throw new Error("本地改名失败");
+      } else {
+        await updateIndex((d) => {
+          const x = (d.songs || []).find((s2) => s2.id === id);
+          if (x) x.title = newTitle;
+        });
+        purge();
+      }
+      toast("已改名：《" + newTitle + "》");
+      loadIndex();
+    } catch (e) {
+      toast(e.message || "改名失败");
+    }
   }
 
   /* ---------- 删除 ---------- */
