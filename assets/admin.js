@@ -14,6 +14,8 @@
   let pickDur = 0;
   let previewId = null;
   let uploading = false;
+  let indexSha = null;                     // 最近一次已知的 index.json 校验值（免去重复读取）
+  let indexBusy = Promise.resolve();       // 曲库更新串行队列
 
   const TOKEN_RE = /^(gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})$/;
 
@@ -114,7 +116,11 @@
       x.setRequestHeader("Content-Type", "application/json");
       x.upload.onprogress = (e) => { if (e.lengthComputable && onProgress) onProgress(e.loaded / e.total); };
       x.onload = () => {
-        if (x.status >= 200 && x.status < 300) return resolve();
+        if (x.status >= 200 && x.status < 300) {
+          let parsed = null;
+          try { parsed = JSON.parse(x.responseText); } catch (e2) { /* ignore */ }
+          return resolve(parsed);
+        }
         let msg = "";
         try { msg = JSON.parse(x.responseText).message || ""; } catch (e) { /* ignore */ }
         reject(new Error(friendlyError(x.status, msg)));
@@ -138,7 +144,7 @@
         if (r.ok) data = await r.json();
       } else {
         const j = await ghApi(ghPath("index.json") + "?ref=" + cfg.branch, "GET", null, true);
-        if (j) data = JSON.parse(decodeB64(j.content));
+        if (j) { indexSha = j.sha; data = JSON.parse(decodeB64(j.content)); }
       }
       songs = (data.songs || []).sort((a, b) => b.up - a.up);
       renderTabs();
@@ -187,7 +193,7 @@
     list.querySelectorAll("[data-dl]").forEach((b) =>
       b.addEventListener("click", () => adminDownload(b.getAttribute("data-dl"), b)));
     list.querySelectorAll("[data-del]").forEach((b) =>
-      b.addEventListener("click", () => deleteSong(b.getAttribute("data-del"))));
+      b.addEventListener("click", () => deleteSong(b.getAttribute("data-del"), b)));
   }
 
   function togglePreview(id) {
@@ -228,25 +234,39 @@
     }
   }
 
-  /* ---------- 更新 index.json（线上模式） ---------- */
-  async function updateIndex(mutator) {
-    let j = await ghApi(ghPath("index.json") + "?ref=" + cfg.branch, "GET", null, true);
-    let data = { songs: [] }, sha = null;
-    if (j) { sha = j.sha; data = JSON.parse(decodeB64(j.content)); }
-    mutator(data);
-    data.updated = Date.now();
-    const body = { message: "update index", content: encodeB64(JSON.stringify(data)), branch: cfg.branch };
-    if (sha) body.sha = sha;
-    try {
-      await ghApi(ghPath("index.json"), "PUT", body);
-    } catch (e) {
-      if (/冲突/.test(e.message)) { // 409：重新拉取后重试一次
-        j = await ghApi(ghPath("index.json") + "?ref=" + cfg.branch, "GET", null, true);
-        sha = j ? j.sha : null;
-        if (sha) body.sha = sha;
-        await ghApi(ghPath("index.json"), "PUT", body);
-      } else throw e;
+  /* ---------- 更新 index.json（线上模式，串行队列 + 冲突自动重试） ---------- */
+  async function applyIndex(mutator) {
+    for (let attempt = 0; attempt < 4; attempt++) {
+      let data, sha = null;
+      if (indexSha) {
+        // 用内存中的最新曲库与校验值，省去一次网络读取
+        data = { songs: (songs || []).map((x) => Object.assign({}, x)) };
+        sha = indexSha;
+      } else {
+        const j = await ghApi(ghPath("index.json") + "?ref=" + cfg.branch, "GET", null, true);
+        data = j ? JSON.parse(decodeB64(j.content)) : { songs: [] };
+        if (j) { sha = j.sha; indexSha = j.sha; }
+      }
+      mutator(data);
+      data.updated = Date.now();
+      const body = { message: "update index", content: encodeB64(JSON.stringify(data)), branch: cfg.branch };
+      if (sha) body.sha = sha;
+      try {
+        const resp = await ghApi(ghPath("index.json"), "PUT", body);
+        indexSha = (resp && resp.content && resp.content.sha) || null;
+        songs = (data.songs || []).slice().sort((a, b) => b.up - a.up);
+        return;
+      } catch (e) {
+        if (!/冲突/.test(e.message) || attempt === 3) throw e;
+        indexSha = null; // 发生冲突：强制下一次重新读取最新数据后再改
+        await new Promise((r) => setTimeout(r, 400 + attempt * 400));
+      }
     }
+  }
+  function updateIndex(mutator) {
+    const p = indexBusy.then(() => applyIndex(mutator));
+    indexBusy = p.catch(() => {});
+    return p;
   }
 
   function purge() {
@@ -351,7 +371,7 @@
         if (!r.ok) throw new Error("本地上传失败");
       } else {
         setUploading(true, "上传中 0%");
-        await ghUpload(ghPath(filePath), {
+        const up = await ghUpload(ghPath(filePath), {
           message: "upload " + filePath, content: b64, branch: cfg.branch
         }, (p) => {
           setUploading(true, "上传中 " + Math.min(99, Math.round(p * 100)) + "%");
@@ -359,7 +379,14 @@
         setUploading(true, "更新曲库…");
         await updateIndex((d) => {
           d.songs = d.songs || [];
-          d.songs.push({ id, title: title.slice(0, 200), cat, file: filePath, size: f.size, dur: Math.round(pickDur || 0), up: Date.now() });
+          // 幂等：重试时不会重复添加
+          if (!d.songs.some((x) => x.id === id)) {
+            d.songs.push({
+              id, title: title.slice(0, 200), cat, file: filePath, size: f.size,
+              dur: Math.round(pickDur || 0), up: Date.now(),
+              sha: (up && up.content && up.content.sha) || null // 记录文件校验值，删除时免去一次读取
+            });
+          }
         });
         purge();
       }
@@ -413,10 +440,11 @@
   }
 
   /* ---------- 删除 ---------- */
-  async function deleteSong(id) {
+  async function deleteSong(id, btn) {
     const s = songs.find((x) => x.id === id);
     if (!s) return;
     if (!confirm("确定删除《" + s.title + "》吗？删除后不可恢复。")) return;
+    if (btn) { btn.disabled = true; btn.textContent = "删除中…"; }
     try {
       if (IS_LOCAL) {
         const r = await fetch("/local/delete", {
@@ -424,19 +452,24 @@
         });
         if (!r.ok) throw new Error("本地删除失败");
       } else {
-        const j = await ghApi(ghPath(s.file) + "?ref=" + cfg.branch, "GET", null, true);
-        if (j) {
-          await ghApi(ghPath(s.file), "DELETE", { message: "delete " + s.file, sha: j.sha, branch: cfg.branch });
+        if (s.sha) {
+          // 上传时已记录校验值，直接删除（少一次网络请求）
+          await ghApi(ghPath(s.file), "DELETE", { message: "delete " + s.file, sha: s.sha, branch: cfg.branch });
+        } else {
+          const j = await ghApi(ghPath(s.file) + "?ref=" + cfg.branch, "GET", null, true);
+          if (j) {
+            await ghApi(ghPath(s.file), "DELETE", { message: "delete " + s.file, sha: j.sha, branch: cfg.branch });
+          }
         }
         await updateIndex((d) => { d.songs = (d.songs || []).filter((x) => x.id !== id); });
         purge();
       }
       if (previewId === id) { preview.pause(); previewId = null; }
       toast("已删除《" + s.title + "》");
-      loadIndex();
     } catch (e) {
       toast(e.message || "删除失败");
     }
+    loadIndex();
   }
 
   /* ---------- 登录 / 令牌 / 设置 ---------- */
