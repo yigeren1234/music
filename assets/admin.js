@@ -440,6 +440,14 @@
   }
 
   /* ---------- 删除 ---------- */
+  async function deleteRemoteFile(file, sha) {
+    try {
+      await ghApi(ghPath(file), "DELETE", { message: "delete " + file, sha, branch: cfg.branch });
+    } catch (e) {
+      // 404：文件已不存在（此前被删过），视为已删除，继续清理曲库记录
+      if (!/文件不存在/.test(e.message)) throw e;
+    }
+  }
   async function deleteSong(id, btn) {
     const s = songs.find((x) => x.id === id);
     if (!s) return;
@@ -454,12 +462,10 @@
       } else {
         if (s.sha) {
           // 上传时已记录校验值，直接删除（少一次网络请求）
-          await ghApi(ghPath(s.file), "DELETE", { message: "delete " + s.file, sha: s.sha, branch: cfg.branch });
+          await deleteRemoteFile(s.file, s.sha);
         } else {
           const j = await ghApi(ghPath(s.file) + "?ref=" + cfg.branch, "GET", null, true);
-          if (j) {
-            await ghApi(ghPath(s.file), "DELETE", { message: "delete " + s.file, sha: j.sha, branch: cfg.branch });
-          }
+          if (j) await deleteRemoteFile(s.file, j.sha);
         }
         await updateIndex((d) => { d.songs = (d.songs || []).filter((x) => x.id !== id); });
         purge();
