@@ -1,6 +1,7 @@
 /* ============ 悦音 · 后台管理脚本 ============ */
 (function () {
   "use strict";
+  const APP_VER = "v4";
   const cfg = window.SITE_CONFIG;
   const IS_LOCAL = cfg.isLocal;
   const $ = (s) => document.querySelector(s);
@@ -236,7 +237,7 @@
 
   /* ---------- 更新 index.json（线上模式，串行队列 + 冲突自动重试） ---------- */
   async function applyIndex(mutator) {
-    for (let attempt = 0; attempt < 4; attempt++) {
+    for (let attempt = 0; attempt < 6; attempt++) {
       let data, sha = null;
       if (indexSha) {
         // 用内存中的最新曲库与校验值，省去一次网络读取
@@ -257,9 +258,9 @@
         songs = (data.songs || []).slice().sort((a, b) => b.up - a.up);
         return;
       } catch (e) {
-        if (!/冲突/.test(e.message) || attempt === 3) throw e;
+        if (!/冲突/.test(e.message) || attempt === 5) throw e;
         indexSha = null; // 发生冲突：强制下一次重新读取最新数据后再改
-        await new Promise((r) => setTimeout(r, 400 + attempt * 400));
+        await new Promise((r) => setTimeout(r, 400 + attempt * 600));
       }
     }
   }
@@ -445,7 +446,15 @@
       await ghApi(ghPath(file), "DELETE", { message: "delete " + file, sha, branch: cfg.branch });
     } catch (e) {
       // 404：文件已不存在（此前被删过），视为已删除，继续清理曲库记录
-      if (!/文件不存在/.test(e.message)) throw e;
+      if (/文件不存在/.test(e.message)) return;
+      // 409：校验值过期（文件内容与记录不一致），重新读取最新校验值后重试一次
+      if (/冲突/.test(e.message)) {
+        const j = await ghApi(ghPath(file) + "?ref=" + cfg.branch, "GET", null, true);
+        if (!j) return; // 读不到也视为已删除
+        await ghApi(ghPath(file), "DELETE", { message: "delete " + file, sha: j.sha, branch: cfg.branch });
+        return;
+      }
+      throw e;
     }
   }
   async function deleteSong(id, btn) {
@@ -594,6 +603,8 @@
 
   /* ---------- 启动 ---------- */
   document.title = cfg.siteName + " · 后台管理";
+  const verTag = $("#verTag");
+  if (verTag) verTag.textContent = APP_VER;
   if (authed) showMain();
   else { $("#gate").hidden = false; }
 })();
