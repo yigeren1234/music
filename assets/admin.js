@@ -1,7 +1,7 @@
 /* ============ 悦音 · 后台管理脚本 ============ */
 (function () {
   "use strict";
-  const APP_VER = "v4";
+  const APP_VER = "v5";
   const cfg = window.SITE_CONFIG;
   const IS_LOCAL = cfg.isLocal;
   const $ = (s) => document.querySelector(s);
@@ -145,7 +145,7 @@
         if (r.ok) data = await r.json();
       } else {
         const j = await ghApi(ghPath("index.json") + "?ref=" + cfg.branch, "GET", null, true);
-        if (j) { indexSha = j.sha; data = JSON.parse(decodeB64(j.content)); }
+        if (j) { if (!indexSha) indexSha = j.sha; data = JSON.parse(decodeB64(j.content)); }
       }
       songs = (data.songs || []).sort((a, b) => b.up - a.up);
       renderTabs();
@@ -237,30 +237,43 @@
 
   /* ---------- 更新 index.json（线上模式，串行队列 + 冲突自动重试） ---------- */
   async function applyIndex(mutator) {
-    for (let attempt = 0; attempt < 6; attempt++) {
-      let data, sha = null;
-      if (indexSha) {
-        // 用内存中的最新曲库与校验值，省去一次网络读取
-        data = { songs: (songs || []).map((x) => Object.assign({}, x)) };
-        sha = indexSha;
-      } else {
-        const j = await ghApi(ghPath("index.json") + "?ref=" + cfg.branch, "GET", null, true);
-        data = j ? JSON.parse(decodeB64(j.content)) : { songs: [] };
-        if (j) { sha = j.sha; indexSha = j.sha; }
+    // 首次（尚无校验值）先读取一次；之后以「内存数据 + 写入响应」为准，
+    // 避免 GitHub 读延迟把最新校验值覆盖成旧值（连续操作的冲突根源）
+    if (!indexSha) {
+      const j = await ghApi(ghPath("index.json") + "?ref=" + cfg.branch, "GET", null, true);
+      if (j) {
+        indexSha = j.sha;
+        const fresh = JSON.parse(decodeB64(j.content));
+        songs = (fresh.songs || []).slice().sort((a, b) => b.up - a.up);
       }
-      mutator(data);
-      data.updated = Date.now();
-      const body = { message: "update index", content: encodeB64(JSON.stringify(data)), branch: cfg.branch };
-      if (sha) body.sha = sha;
+    }
+    let data = { songs: (songs || []).map((x) => Object.assign({}, x)) };
+    mutator(data);
+    data.updated = Date.now();
+    const body = { message: "update index", content: encodeB64(JSON.stringify(data)), branch: cfg.branch };
+    if (indexSha) body.sha = indexSha;
+    for (let attempt = 0; attempt < 6; attempt++) {
       try {
         const resp = await ghApi(ghPath("index.json"), "PUT", body);
         indexSha = (resp && resp.content && resp.content.sha) || null;
         songs = (data.songs || []).slice().sort((a, b) => b.up - a.up);
+        renderTabs();
+        renderList();
         return;
       } catch (e) {
         if (!/冲突/.test(e.message) || attempt === 5) throw e;
-        indexSha = null; // 发生冲突：强制下一次重新读取最新数据后再改
-        await new Promise((r) => setTimeout(r, 400 + attempt * 600));
+        // 冲突：等待 GitHub 读延迟过去，重读最新数据后重新应用修改
+        await new Promise((r) => setTimeout(r, 1500 + attempt * 1500));
+        const j = await ghApi(ghPath("index.json") + "?ref=" + cfg.branch, "GET", null, true);
+        if (j) {
+          indexSha = j.sha;
+          const fresh = JSON.parse(decodeB64(j.content));
+          data = { songs: (fresh.songs || []).slice() };
+          mutator(data); // 幂等：在最新数据上重新应用
+          data.updated = Date.now();
+          body.content = encodeB64(JSON.stringify(data));
+          body.sha = j.sha;
+        }
       }
     }
   }
@@ -393,7 +406,7 @@
       }
       toast("《" + title + "》上传成功，已发布到「" + catName() + "」");
       resetForm();
-      loadIndex();
+      if (IS_LOCAL) loadIndex(); // 线上模式由 applyIndex 完成界面刷新
     } catch (e) {
       toast(e.message || "上传失败");
       setUploading(false, "上传到「" + catName() + "」");
@@ -434,7 +447,7 @@
         purge();
       }
       toast("已改名：《" + newTitle + "》");
-      loadIndex();
+      if (IS_LOCAL) loadIndex(); // 线上模式由 applyIndex 完成界面刷新
     } catch (e) {
       toast(e.message || "改名失败");
     }
@@ -484,7 +497,8 @@
     } catch (e) {
       toast(e.message || "删除失败");
     }
-    loadIndex();
+    if (IS_LOCAL) loadIndex();          // 本地模式从服务器刷新
+    else { renderTabs(); renderList(); } // 线上模式：成功已刷新；失败则恢复按钮状态
   }
 
   /* ---------- 登录 / 令牌 / 设置 ---------- */
