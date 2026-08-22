@@ -88,7 +88,7 @@
     };
   }
   function friendlyError(status, msg) {
-    if (status === 401) return "令牌无效或已过期，请点「设置」更新令牌";
+    if (status === 401) return "令牌无效或已过期：请点右上角「退出」后重新输入密码登录";
     if (status === 403) return "权限不足或请求过于频繁，请稍后再试";
     if (status === 404) return "仓库或文件不存在，请检查部署是否完成";
     if (status === 409) return "数据有冲突，请刷新页面后重试";
@@ -497,8 +497,8 @@
     const h = sha256(pw);
     const localHash = localStorage.getItem("pwhash");
     if (h === cfg.adminHash || (localHash && h === localHash)) {
-      // 密码正确：若尚未持有令牌且配置了加密令牌，用密码自动解密
-      if (!pat && cfg.patEnc && !IS_LOCAL) {
+      // 密码正确：每次登录都重新解密令牌并覆盖本机旧值（自动修复已失效的缓存令牌）
+      if (cfg.patEnc && !IS_LOCAL) {
         try {
           pat = await decryptPat(pw);
           localStorage.setItem("pat", pat);
