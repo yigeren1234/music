@@ -1,7 +1,7 @@
 /* ============ 悦音 · 后台管理脚本 ============ */
 (function () {
   "use strict";
-  const APP_VER = "v5";
+  const APP_VER = "v6";
   const cfg = window.SITE_CONFIG;
   const IS_LOCAL = cfg.isLocal;
   const $ = (s) => document.querySelector(s);
@@ -77,7 +77,8 @@
     note: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 18.5a3 3 0 1 1-2-2.83V5.6a1 1 0 0 1 .76-.97l9-2.25A1 1 0 0 1 18 3.35v10.82a3 3 0 1 1-2-2.83V7.28l-7 1.75v9.47z"/></svg>',
     download: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>',
     edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>',
-    trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>'
+    trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>',
+    link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>'
   };
 
   /* ---------- GitHub API ---------- */
@@ -179,6 +180,7 @@
             '<div class="row-meta">' + fmtDur(s.dur) + " · " + fmtSize(s.size) + " · " + fmtDate(s.up) + "</div>" +
           "</div>" +
           '<div class="row-actions">' +
+            '<button class="btn btn-ghost btn-sm" data-link="' + esc(s.id) + '">' + ICONS.link + " 链接</button>" +
             '<button class="btn btn-ghost btn-sm" data-ren="' + esc(s.id) + '">' + ICONS.edit + " 改名</button>" +
             '<button class="btn btn-ghost btn-sm" data-dl="' + esc(s.id) + '">' + ICONS.download + " 下载</button>" +
             '<button class="btn btn-danger btn-sm" data-del="' + esc(s.id) + '">' + ICONS.trash + " 删除</button>" +
@@ -189,6 +191,8 @@
 
     list.querySelectorAll("[data-play]").forEach((b) =>
       b.addEventListener("click", () => togglePreview(b.getAttribute("data-play"))));
+    list.querySelectorAll("[data-link]").forEach((b) =>
+      b.addEventListener("click", () => copySongLink(b.getAttribute("data-link"))));
     list.querySelectorAll("[data-ren]").forEach((b) =>
       b.addEventListener("click", () => renameSong(b.getAttribute("data-ren"))));
     list.querySelectorAll("[data-dl]").forEach((b) =>
@@ -424,6 +428,26 @@
     drop.classList.remove("has");
     fileMeta.hidden = true;
     setUploading(false, "上传到「" + catName() + "」");
+  }
+
+  /* ---------- 单曲专属链接 ---------- */
+  function songLink(id) {
+    const base = IS_LOCAL
+      ? location.origin + location.pathname.replace(/admin\.html.*$/, "index.html")
+      : cfg.cdnBase + "index.html";
+    return base + "?song=" + encodeURIComponent(id);
+  }
+  async function copySongLink(id, btn) {
+    const s = songs.find((x) => x.id === id);
+    if (!s) return;
+    const url = songLink(id);
+    let ok = false;
+    try {
+      await navigator.clipboard.writeText(url);
+      ok = true;
+    } catch (e) { /* 降级为手动复制 */ }
+    if (ok) toast("《" + s.title + "》专属链接已复制，可直接发给客户：" + url);
+    else window.prompt("请手动复制《" + s.title + "》的专属链接：", url);
   }
 
   /* ---------- 改名 ---------- */
