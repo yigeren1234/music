@@ -30,6 +30,16 @@
     b >= 1048576 ? (b / 1048576).toFixed(1) + " MB" : Math.max(1, Math.round(b / 1024)) + " KB";
   const fmtDate = (t) => new Date(t).toLocaleDateString("zh-CN", { year: "numeric", month: "2-digit", day: "2-digit" }).replace(/\//g, "-");
   const fileUrl = (f) => cfg.cdnBase + f;
+  // 备用通道：GitHub 官方接口直连（CDN 未就绪时自动使用）
+  const ghRawUrl = (f) =>
+    "https://api.github.com/repos/" + cfg.owner + "/" + cfg.repo + "/contents/" + f + "?ref=" + cfg.branch;
+  async function fetchAudio(file) {
+    try {
+      const r = await fetch(fileUrl(file));
+      if (r.ok) return r;
+    } catch (e) { /* 尝试备用通道 */ }
+    return fetch(ghRawUrl(file), { headers: { Accept: "application/vnd.github.raw" } });
+  }
   const extOf = (f) => { const i = String(f).lastIndexOf("."); return i >= 0 ? String(f).slice(i) : ""; };
   const catOf = (k) => (cfg.cats.find((c) => c.key === k) || cfg.cats[0]);
   const byId = (id) => songs.find((s) => s.id === id);
@@ -154,6 +164,7 @@
       return;
     }
     playingId = id;
+    audioFallbackUsed = false;
     audio.src = fileUrl(s.file);
     audio.play().catch(() => toast("播放失败，请检查网络后重试"));
     player.hidden = false;
@@ -205,7 +216,20 @@
     $("#pDur").textContent = fmtDur(audio.duration);
     $("#pFill").style.width = (audio.currentTime / audio.duration) * 100 + "%";
   });
-  audio.addEventListener("error", () => toast("音频加载失败，请稍后重试"));
+  let audioFallbackUsed = false; // 播放失败时自动切换备用通道（每首歌只尝试一次）
+  audio.addEventListener("error", () => {
+    if (playingId && !audioFallbackUsed) {
+      const s = byId(playingId);
+      if (s) {
+        audioFallbackUsed = true;
+        audio.src = ghRawUrl(s.file) + "&cb=" + Date.now();
+        audio.play().catch(() => toast("播放失败，请稍后重试"));
+        syncPlayIcons();
+        return;
+      }
+    }
+    toast("音频加载失败，请稍后重试");
+  });
 
   $("#pPlay").addEventListener("click", () => (playingId ? play(playingId) : null));
   $("#pPrev").addEventListener("click", () => step(-1));
@@ -233,7 +257,7 @@
     btn.disabled = true;
     btn.textContent = "下载中 0%";
     try {
-      const res = await fetch(fileUrl(s.file));
+      const res = await fetchAudio(s.file);
       if (!res.ok) throw new Error("HTTP " + res.status);
       const total = Number(res.headers.get("Content-Length")) || 0;
       const reader = res.body.getReader();
