@@ -128,11 +128,24 @@
       ? songs.filter((s) => s.id === focusId || s.code === focusId)
       : songs.filter((s) => s.cat === curCat && !(cfg.hideCustomerFromList && s.cat === "customer"));
     $("#notice").hidden = true;
+    let shareBar = "";
+    // 单曲专属页：顶部显示标准短链（避免与跳转后的长地址混淆）
+    if (focusMode && list.length && !cfg.isLocal && cfg.pagesBase) {
+      const code = list[0].code || focusId;
+      const shortUrl = cfg.pagesBase + code;
+      shareBar =
+        '<div class="share-bar">' +
+          '<span class="share-label">本页分享链接</span>' +
+          '<code class="share-url">' + esc(shortUrl) + "</code>" +
+          '<button class="btn btn-accent btn-sm" id="copyShare">复制</button>' +
+        "</div>";
+    }
+    let cardsHtml = "";
     if (!list.length) {
-      grid.innerHTML = '<div class="loading">本栏目暂无音乐，敬请期待</div>';
+      grid.innerHTML = shareBar + '<div class="loading">本栏目暂无音乐，敬请期待</div>';
       return;
     }
-    grid.innerHTML = list.map((s) => {
+    cardsHtml = list.map((s) => {
       const isPlaying = playingId === s.id;
       const icon = ICONS[s.cat] || ICONS.bgm;
       return (
@@ -156,12 +169,26 @@
       );
     }).join("");
 
+    grid.innerHTML = shareBar + cardsHtml;
+
     grid.querySelectorAll("[data-play]").forEach((b) => {
       b.addEventListener("click", () => play(b.getAttribute("data-play")));
     });
     grid.querySelectorAll("[data-dl]").forEach((b) => {
       b.addEventListener("click", () => download(b.getAttribute("data-dl"), b));
     });
+    const cp = document.getElementById("copyShare");
+    if (cp) {
+      cp.addEventListener("click", async () => {
+        const code = (list[0] && (list[0].code || focusId)) || focusId;
+        const url = cfg.pagesBase + code;
+        let ok = false;
+        try { await navigator.clipboard.writeText(url); ok = true; } catch (e) { /* 降级 */ }
+        if (ok) { cp.textContent = "已复制 ✓"; }
+        else window.prompt("请手动复制：", url);
+        setTimeout(() => { cp.textContent = "复制"; }, 2000);
+      });
+    }
   }
 
   /* ---------- 分类切换 ---------- */
