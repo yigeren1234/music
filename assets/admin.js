@@ -394,6 +394,13 @@
         }, (p) => {
           setUploading(true, "上传中 " + Math.min(99, Math.round(p * 100)) + "%");
         });
+        // 为这首歌生成纯数字编号与独立页面（失败不阻塞上传）
+        let code = null;
+        setUploading(true, "生成专属链接…");
+        try {
+          code = await generateUniqueCode();
+          await createSongPage(code);
+        } catch (e2) { code = null; /* 稍后点「链接」时会自动补建 */ }
         setUploading(true, "更新曲库…");
         await updateIndex((d) => {
           d.songs = d.songs || [];
@@ -402,7 +409,8 @@
             d.songs.push({
               id, title: title.slice(0, 200), cat, file: filePath, size: f.size,
               dur: Math.round(pickDur || 0), up: Date.now(),
-              sha: (up && up.content && up.content.sha) || null // 记录文件校验值，删除时免去一次读取
+              sha: (up && up.content && up.content.sha) || null, // 记录文件校验值，删除时免去一次读取
+              code: code || null // 纯数字短链编号
             });
           }
         });
@@ -430,23 +438,63 @@
     setUploading(false, "上传到「" + catName() + "」");
   }
 
-  /* ---------- 单曲专属链接 ---------- */
-  function songLink(id) {
-    const base = IS_LOCAL
-      ? location.origin + location.pathname.replace(/admin\.html.*$/, "index.html")
-      : cfg.cdnBase + "index.html";
-    return base + "?song=" + encodeURIComponent(id);
+  /* ---------- 单曲专属链接（纯数字短链） ---------- */
+  async function generateUniqueCode() {
+    for (let i = 0; i < 20; i++) {
+      const code = String(100000 + Math.floor(Math.random() * 900000)); // 6 位数字
+      const taken = songs.some((s) => s.code === code) ||
+        (await ghApi(ghPath(code + "/index.html") + "?ref=" + cfg.branch, "GET", null, true));
+      if (!taken) return code;
+    }
+    throw new Error("编号生成失败，请重试");
+  }
+  // 用当前首页模板生成单曲独立页面（存为 <编号>/index.html，短链即可直达）
+  async function createSongPage(code) {
+    const res = await fetch(cfg.cdnBase + "index.html");
+    if (!res.ok) throw new Error("无法读取页面模板");
+    const html = (await res.text())
+      .replace(/assets\//g, "../assets/")
+      .replace("<script src=", '<script>window.SONG_PAGE_BASE="../";</script><script src=');
+    await ghUpload(ghPath(code + "/index.html"), {
+      message: "song page " + code,
+      content: encodeB64(html),
+      branch: cfg.branch
+    }, null);
+  }
+  // 确保某首歌拥有数字编号与专属页面（首次点「链接」时自动补建）
+  async function ensureSongPage(s) {
+    const code = await generateUniqueCode();
+    await createSongPage(code);
+    await updateIndex((d) => {
+      const x = (d.songs || []).find((y) => y.id === s.id);
+      if (x) x.code = code;
+    });
+    s.code = code;
+    return code;
   }
   async function copySongLink(id, btn) {
     const s = songs.find((x) => x.id === id);
     if (!s) return;
-    const url = songLink(id);
+    let url;
+    if (IS_LOCAL) {
+      url = location.origin + location.pathname.replace(/admin\.html.*$/, "index.html") + "?song=" + encodeURIComponent(id);
+    } else {
+      if (btn) { btn.disabled = true; const orig = btn.innerHTML; btn.textContent = "生成中…"; }
+      try {
+        s.code = s.code || (await ensureSongPage(s));
+      } catch (e) {
+        toast("链接生成失败：" + e.message);
+        renderList();
+        return;
+      }
+      url = cfg.pagesBase + s.code; // 例如 https://账号.github.io/music/126598
+    }
     let ok = false;
     try {
       await navigator.clipboard.writeText(url);
       ok = true;
     } catch (e) { /* 降级为手动复制 */ }
-    if (ok) toast("《" + s.title + "》专属链接已复制，可直接发给客户：" + url);
+    if (ok) toast("《" + s.title + "》专属链接已复制：" + url);
     else window.prompt("请手动复制《" + s.title + "》的专属链接：", url);
   }
 
