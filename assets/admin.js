@@ -1,7 +1,7 @@
 /* ============ 悦音 · 后台管理脚本 ============ */
 (function () {
   "use strict";
-  const APP_VER = "v7";
+  const APP_VER = "v8";
   const cfg = window.SITE_CONFIG;
   const IS_LOCAL = cfg.isLocal;
   const $ = (s) => document.querySelector(s);
@@ -60,6 +60,17 @@
   const catLabel = (k) => (cfg.cats.find((c) => c.key === k) || { label: k }).label;
   const catCls = (k) => (cfg.cats.find((c) => c.key === k) || { cls: "c-bgm" }).cls;
   const fileUrl = (f) => cfg.cdnBase + f;
+  // 备用通道：GitHub 官方接口直连（CDN 未就绪时自动使用）
+  const ghRawUrl = (f) => "https://api.github.com/repos/" + cfg.owner + "/" + cfg.repo + "/contents/" + f + "?ref=" + cfg.branch;
+  async function fetchAudio(file) {
+    try {
+      const r = await fetch(fileUrl(file));
+      if (r.ok) return r;
+    } catch (e) { /* 尝试备用通道 */ }
+    return fetch(ghRawUrl(file), {
+      headers: Object.assign(ghHeaders(), { Accept: "application/vnd.github.raw" })
+    });
+  }
   const extOf = (f) => { const i = String(f).lastIndexOf("."); return i >= 0 ? String(f).slice(i) : ""; };
   let toastTimer = null;
   function toast(msg) {
@@ -224,7 +235,7 @@
     const orig = btn.innerHTML;
     btn.textContent = "下载中…";
     try {
-      const res = await fetch(fileUrl(s.file));
+      const res = await fetchAudio(s.file);
       if (!res.ok) throw new Error("HTTP " + res.status);
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
@@ -287,9 +298,9 @@
     return p;
   }
 
-  function purge() {
+  function purge(extra) {
     if (IS_LOCAL) return;
-    ["index.json", "index.html"].forEach((f) => {
+    ["index.json", "index.html"].concat(extra || []).forEach((f) => {
       fetch("https://purge.jsdelivr.net/gh/" + cfg.owner + "/" + cfg.repo + "@" + cfg.branch + "/" + f, { mode: "no-cors" }).catch(() => {});
     });
   }
@@ -414,7 +425,7 @@
             });
           }
         });
-        purge();
+        purge([filePath]); // 立即通知 CDN 加速新文件
       }
       toast("《" + title + "》上传成功，已发布到「" + catName() + "」");
       resetForm();
