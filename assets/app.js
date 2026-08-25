@@ -5,10 +5,13 @@
   const $ = (s) => document.querySelector(s);
   const audio = $("#audio");
   const player = $("#player");
+  // 单曲专属链接模式：index.html?song=曲目ID 时只展示这一首
+  const focusId = new URLSearchParams(location.search).get("song") || "";
 
   let songs = [];
-  let curCat = "customer";
+  let curCat = cfg.hideCustomerFromList ? "bgm" : "customer";
   let playingId = null;
+  let focusMode = false; // 单曲专属链接模式
 
   /* ---------- 工具 ---------- */
   const esc = (s) =>
@@ -54,6 +57,17 @@
       if (!res.ok) throw new Error("HTTP " + res.status);
       const data = await res.json();
       songs = (data.songs || []).sort((a, b) => b.up - a.up);
+      // 单曲专属链接模式
+      if (focusId) {
+        focusMode = true;
+        document.body.classList.add("focus-mode");
+        const song = byId(focusId);
+        if (!song) {
+          grid.innerHTML = '<div class="loading">曲目不存在或已被删除</div>';
+          return;
+        }
+        document.title = song.title + " · " + cfg.siteName;
+      }
       renderStats();
       renderGrid();
       setCat(curCat, true);
@@ -74,7 +88,9 @@
   /* ---------- 渲染列表 ---------- */
   function renderGrid() {
     const grid = $("#grid");
-    const list = songs.filter((s) => s.cat === curCat);
+    const list = focusMode
+      ? songs.filter((s) => s.id === focusId)
+      : songs.filter((s) => s.cat === curCat && !(cfg.hideCustomerFromList && s.cat === "customer"));
     $("#notice").hidden = true;
     if (!list.length) {
       grid.innerHTML = '<div class="loading">本栏目暂无音乐，敬请期待</div>';
@@ -249,6 +265,12 @@
   document.querySelectorAll(".topnav a").forEach((a) =>
     a.addEventListener("click", () => setCat(a.getAttribute("data-cat")))
   );
+  // 客户音乐专属链接模式：首页不展示该栏目入口与曲目
+  if (cfg.hideCustomerFromList) {
+    document
+      .querySelectorAll('.tab[data-cat="customer"], .topnav a[data-cat="customer"]')
+      .forEach((el) => { el.style.display = "none"; });
+  }
 
   $("#brandName").textContent = cfg.siteName;
   $("#footerName").textContent = cfg.siteName;
