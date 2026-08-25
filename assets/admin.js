@@ -1,7 +1,7 @@
 /* ============ 悦音 · 后台管理脚本 ============ */
 (function () {
   "use strict";
-  const APP_VER = "v6";
+  const APP_VER = "v7";
   const cfg = window.SITE_CONFIG;
   const IS_LOCAL = cfg.isLocal;
   const $ = (s) => document.querySelector(s);
@@ -448,16 +448,22 @@
     }
     throw new Error("编号生成失败，请重试");
   }
-  // 用当前首页模板生成单曲独立页面（存为 <编号>/index.html，短链即可直达）
+  // 生成单曲独立页：一个极简跳转页，指向主站的单曲视图
+  // （这样以后主站升级，所有短链都自动使用最新逻辑）
+  function songRedirectHtml(code) {
+    const target = "../index.html?song=" + code;
+    return '<!DOCTYPE html>\n<html lang="zh-CN">\n<head>\n<meta charset="UTF-8">\n'
+      + '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
+      + '<meta name="robots" content="noindex">\n<title>正在打开…</title>\n'
+      + '<meta http-equiv="refresh" content="0;url=' + target + '">\n'
+      + '</head>\n<body style="margin:0;height:100vh;display:flex;align-items:center;justify-content:center;background:#0b0d12;color:#eef1f6;font-family:-apple-system,sans-serif">'
+      + '正在打开音乐… <a style="color:#e8b45a;margin-left:10px" href="' + target + '">点此进入</a>'
+      + '<script>location.replace(' + JSON.stringify(target) + ');</script>\n</body>\n</html>';
+  }
   async function createSongPage(code) {
-    const res = await fetch(cfg.cdnBase + "index.html");
-    if (!res.ok) throw new Error("无法读取页面模板");
-    const html = (await res.text())
-      .replace(/assets\//g, "../assets/")
-      .replace("<script src=", '<script>window.SONG_PAGE_BASE="../";</script><script src=');
     await ghUpload(ghPath(code + "/index.html"), {
       message: "song page " + code,
-      content: encodeB64(html),
+      content: encodeB64(songRedirectHtml(code)),
       branch: cfg.branch
     }, null);
   }
