@@ -2,11 +2,31 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex">
-<title>正在打开…</title>
-<meta http-equiv="refresh" content="0;url=../index.html?song=398687">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>烧饼上市成品新 | 悦音</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0b0d12;color:#eef1f6;font-family:-apple-system,sans-serif;padding:20px}
+.card{width:100%;max-width:400px;background:#141a24;border-radius:20px;padding:36px 28px;text-align:center;border:1px solid rgba(255,255,255,.08)}
+.icon{font-size:42px;margin-bottom:16px}
+h1{font-size:21px;margin-bottom:6px}
+.meta{color:#8f99ab;font-size:14px;margin-bottom:26px}
+.btn-play{display:block;width:100%;padding:15px;border:none;border-radius:14px;background:#e8b45a;color:#221708;font-size:17px;font-weight:700;cursor:pointer;margin-bottom:12px}
+.btn-dl{display:block;width:100%;padding:15px;border:none;border-radius:14px;background:#1a3a5c;color:#6db3f2;text-decoration:none;font-size:16px;font-weight:600}
+.footer{margin-top:22px;color:#5b6472;font-size:12px}
+audio{display:none}
+</style>
 </head>
-<body style="margin:0;height:100vh;display:flex;align-items:center;justify-content:center;background:#0b0d12;color:#eef1f6;font-family:-apple-system,sans-serif">正在打开音乐… <a style="color:#e8b45a;margin-left:10px" href="../index.html?song=398687">点此进入</a><script>location.replace("../index.html?song=398687");</script>
+<body>
+<div class="card">
+<div class="icon">🎵</div>
+<h1>烧饼上市成品新</h1>
+<p class="meta">客户音乐 · 0:53 · 0.8MB</p>
+<button id="pb" style="display:block;width:100%;padding:15px;border:none;border-radius:14px;background:#e8b45a;color:#221708;font-size:17px;font-weight:700;cursor:pointer;font-family:inherit" onclick="var a=document.getElementById('aud');var b=this;if(a.paused){a.play();b.textContent='⏸ 暂停'}else{a.pause();b.textContent='▶ 播放'}">▶ 播放</button>
+<a href="https://cdn.jsdelivr.net/gh/yigeren1234/music@main/music/mt91k9ka-ovyn3.mp3" download="烧饼上市成品新.mp3" style="display:block;width:100%;padding:15px;border:none;border-radius:14px;background:#1a3a5c;color:#6db3f2;text-decoration:none;font-size:16px;font-weight:600;margin-top:10px">⬇ 下载文件</a>
+<audio id="aud" src="https://cdn.jsdelivr.net/gh/yigeren1234/music@main/music/mt91k9ka-ovyn3.mp3" preload="none"></audio>
+<p class="footer">Powered by 悦音</p>
+</div>
+<script>var a=document.getElementById('aud'),p=document.getElementById('pb');a.onplay=function(){p.textContent='⏸ 暂停'};a.onpause=function(){p.textContent='▶ 播放'};a.onended=function(){p.textContent='▶ 播放'};</script>
 </body>
 </html>
