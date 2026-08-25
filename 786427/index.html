@@ -2,110 +2,11 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0b0d12">
-<link rel="icon" type="image/svg+xml" href="../assets/favicon.svg?v=6">
-<title>悦音 · 音乐库</title>
-<link rel="stylesheet" href="../assets/style.css?v=6">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>正在打开…</title>
+<meta http-equiv="refresh" content="0;url=../index.html?song=786427">
 </head>
-<body>
-
-<header class="topbar">
-  <div class="topbar-inner">
-    <a class="brand" href="index.html">
-      <span class="brand-mark">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 18.5a3 3 0 1 1-2-2.83V5.6a1 1 0 0 1 .76-.97l9-2.25A1 1 0 0 1 18 3.35v10.82a3 3 0 1 1-2-2.83V7.28l-7 1.75v9.47z"/></svg>
-      </span>
-      <span class="brand-name" id="brandName">悦音</span>
-    </a>
-    <nav class="topnav" id="topnav">
-      <a href="#tabs" data-cat="customer">客户音乐</a>
-      <a href="#tabs" data-cat="bgm">背景音乐</a>
-      <a href="#tabs" data-cat="female">女声</a>
-      <a href="#tabs" data-cat="male">男声</a>
-    </nav>
-  </div>
-</header>
-
-<main>
-  <section class="hero">
-    <h1 class="hero-title">悦<span class="accent">音</span></h1>
-    <p class="hero-sub" id="heroSub">背景音乐 · 女声 · 男声 · 客户音乐 —— 在线试听，一键下载</p>
-    <div class="hero-stats" id="heroStats">正在载入曲库…</div>
-  </section>
-
-  <section class="tabs-wrap" id="tabs">
-    <div class="tabs">
-      <button class="tab active" data-cat="customer">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
-        客户音乐 <span class="tab-count" id="cnt-customer">0</span>
-      </button>
-      <button class="tab" data-cat="bgm">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 18.5a3 3 0 1 1-2-2.83V5.6a1 1 0 0 1 .76-.97l9-2.25A1 1 0 0 1 18 3.35v10.82a3 3 0 1 1-2-2.83V7.28l-7 1.75v9.47z"/></svg>
-        背景音乐 <span class="tab-count" id="cnt-bgm">0</span>
-      </button>
-      <button class="tab" data-cat="female">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 14a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-2a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-1 3h2v3h3v2h-3v2h-2v-2H8v-2h3v-3z"/></svg>
-        女声 <span class="tab-count" id="cnt-female">0</span>
-      </button>
-      <button class="tab" data-cat="male">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 13a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm0-2a2 2 0 1 0 0-4 2 2 0 0 0 0 4zm-1 2h2v2h2v2h-2v3h-2v-3H9v-2h2v-2z"/></svg>
-        男声 <span class="tab-count" id="cnt-male">0</span>
-      </button>
-    </div>
-  </section>
-
-  <section class="notice" id="notice" hidden>
-    <div class="notice-inner">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
-      <span id="noticeText"></span>
-    </div>
-  </section>
-
-  <section class="grid" id="grid">
-    <div class="loading">正在载入音乐列表…</div>
-  </section>
-</main>
-
-<footer class="footer">
-  <p id="footerContact"></p>
-  <p class="footer-links"><a href="admin.html">管理入口</a></p>
-  <p class="footer-copy">© <span id="year"></span> <span id="footerName"></span> · 免注册 · 直接下载</p>
-</footer>
-
-<!-- 底部播放器 -->
-<div class="player" id="player" hidden>
-  <div class="p-cover c-bgm" id="pCover">
-    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9 18.5a3 3 0 1 1-2-2.83V5.6a1 1 0 0 1 .76-.97l9-2.25A1 1 0 0 1 18 3.35v10.82a3 3 0 1 1-2-2.83V7.28l-7 1.75v9.47z"/></svg>
-  </div>
-  <div class="p-info">
-    <div class="p-title" id="pTitle">—</div>
-    <div class="p-sub" id="pSub">—</div>
-  </div>
-  <div class="p-controls">
-    <button class="p-btn" id="pPrev" title="上一首">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6V5zm12 1.2v11.6a1 1 0 0 1-1.53.85L10 14.2v-4.4l6.47-4.45A1 1 0 0 1 18 6.2z"/></svg>
-    </button>
-    <button class="p-btn p-play" id="pPlay" title="播放/暂停">
-      <svg class="ic-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.54.84l10-6.5a1 1 0 0 0 0-1.68l-10-6.5A1 1 0 0 0 8 5.5z"/></svg>
-      <svg class="ic-pause" viewBox="0 0 24 24" fill="currentColor" hidden><path d="M7 5h4v14H7V5zm6 0h4v14h-4V5z"/></svg>
-    </button>
-    <button class="p-btn" id="pNext" title="下一首">
-      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 5h2v14h-2V5zM6 6.2v11.6a1 1 0 0 0 1.53.85L14 14.2v-4.4L7.53 5.35A1 1 0 0 0 6 6.2z"/></svg>
-    </button>
-  </div>
-  <div class="p-progress">
-    <div class="p-bar" id="pBar"><div class="p-fill" id="pFill"></div></div>
-    <div class="p-time"><span id="pCur">0:00</span><span id="pDur">0:00</span></div>
-  </div>
-  <button class="p-btn p-close" id="pClose" title="关闭">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
-  </button>
-</div>
-
-<audio id="audio" preload="none"></audio>
-
-<script>window.SONG_PAGE_BASE="../";</script><script src="../assets/config.js?v=6"></script>
-<script src="../assets/app.js?v=6"></script>
+<body style="margin:0;height:100vh;display:flex;align-items:center;justify-content:center;background:#0b0d12;color:#eef1f6;font-family:-apple-system,sans-serif">正在打开音乐… <a style="color:#e8b45a;margin-left:10px" href="../index.html?song=786427">点此进入</a><script>location.replace("../index.html?song=786427");</script>
 </body>
 </html>
