@@ -188,6 +188,14 @@ input,select,textarea{font-family:inherit;font-size:15px;color:var(--text)}
 }
 @keyframes toastIn{from{opacity:0;transform:translate(-50%,-8px)}to{opacity:1;transform:translate(-50%,0)}}
 
+/* ---------- 单曲专属分享页模式 ---------- */
+body.focus-mode .tabs-wrap,
+body.focus-mode .topnav,
+body.focus-mode .notice{display:none}
+body.focus-mode .grid{grid-template-columns:minmax(0,520px);justify-content:center;margin-top:14px}
+body.focus-mode .hero{padding-bottom:16px}
+body.focus-mode .hero-stats{display:none}
+
 /* ---------- 响应式 ---------- */
 @media (max-width:920px){
   .player{grid-template-columns:auto 1fr auto;grid-template-rows:auto auto;row-gap:8px;column-gap:14px}
