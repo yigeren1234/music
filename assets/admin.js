@@ -1,7 +1,7 @@
 /* ============ 悦音 · 后台管理脚本 ============ */
 (function () {
   "use strict";
-  const APP_VER = "v8";
+  const APP_VER = "v10";
   const cfg = window.SITE_CONFIG;
   const IS_LOCAL = cfg.isLocal;
   const $ = (s) => document.querySelector(s);
@@ -410,7 +410,7 @@
         setUploading(true, "生成专属链接…");
         try {
           code = await generateUniqueCode();
-          await createSongPage(code);
+          await createSongPage(code, { title: title.slice(0, 200), cat, file: filePath, size: f.size, dur: Math.round(pickDur || 0) });
         } catch (e2) { code = null; /* 稍后点「链接」时会自动补建 */ }
         setUploading(true, "更新曲库…");
         await updateIndex((d) => {
@@ -459,29 +459,42 @@
     }
     throw new Error("编号生成失败，请重试");
   }
-  // 生成单曲独立页：一个极简跳转页，指向主站的单曲视图
-  // （这样以后主站升级，所有短链都自动使用最新逻辑）
-  function songRedirectHtml(code) {
-    const target = "../index.html?song=" + code;
-    return '<!DOCTYPE html>\n<html lang="zh-CN">\n<head>\n<meta charset="UTF-8">\n'
-      + '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
-      + '<meta name="robots" content="noindex">\n<title>正在打开…</title>\n'
-      + '<meta http-equiv="refresh" content="0;url=' + target + '">\n'
-      + '</head>\n<body style="margin:0;height:100vh;display:flex;align-items:center;justify-content:center;background:#0b0d12;color:#eef1f6;font-family:-apple-system,sans-serif">'
-      + '正在打开音乐… <a style="color:#e8b45a;margin-left:10px" href="' + target + '">点此进入</a>'
-      + '<script>location.replace(' + JSON.stringify(target) + ');</script>\n</body>\n</html>';
-  }
-  async function createSongPage(code) {
+  // 生成单曲独立页：完整的自包含播放页面，短链打开后地址栏不变
+  async function createSongPage(code, song) {
+    const audioAbsUrl = "https://cdn.jsdelivr.net/gh/" + cfg.owner + "/" + cfg.repo + "@" + cfg.branch + "/" + song.file;
+    const title = song.title || "音乐";
+    const durStr = fmtDur(song.dur);
+    const sizeStr = fmtSize(song.size);
+    const html =
+      '<!DOCTYPE html>\n<html lang="zh-CN">\n<head>\n<meta charset="UTF-8">\n'
+      + '<meta name="viewport" content="width=device-width,initial-scale=1">\n'
+      + '<title>' + esc(title) + ' | ' + (cfg.siteName || "悦音") + '</title>\n<style>\n'
+      + '*{margin:0;padding:0;box-sizing:border-box}\n'
+      + 'body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0b0d12;color:#eef1f6;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;padding:20px}\n'
+      + '.card{width:100%;max-width:420px;background:#141a24;border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:36px 28px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4)}\n'
+      + '.icon{width:72px;height:72px;margin:0 auto 18px;background:#1a2a45;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:32px}\n'
+      + 'h1{font-size:21px;font-weight:700;margin-bottom:8px}\n'
+      + '.meta{color:#8f99ab;font-size:14px;margin-bottom:26px}\n'
+      + '.btn-play{display:block;width:100%;padding:15px;border:none;border-radius:14px;background:linear-gradient(135deg,#e8b45a,#d68a3c);color:#221708;font-size:17px;font-weight:700;cursor:pointer;margin-bottom:12px}\n'
+      + '.btn-dl{display:block;width:100%;padding:15px;border:none;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#eef1f6;text-decoration:none;font-size:16px;font-weight:600;cursor:pointer}\n'
+      + '.footer{margin-top:26px;color:#5b6472;font-size:12px}\n'
+      + '</style>\n</head>\n<body>\n'
+      + '<div class="card"><div class="icon">🎵</div><h1>' + esc(title) + '</h1>'
+      + '<p class="meta">' + durStr + ' · ' + sizeStr + '</p>'
+      + '<button class="btn-play" id="pbtn" onclick="var a=document.getElementById(\'aud\');if(a.paused){a.play();this.textContent=\'⏸ 暂停\'}else{a.pause();this.textContent=\'▶ 播放\'}">▶ 播放</button>'
+      + '<a class="btn-dl" href="' + audioAbsUrl + '" download="' + esc(title) + extOf(song.file) + '">⬇ 下载</a>'
+      + '<audio id="aud" src="' + audioAbsUrl + '" preload="none"></audio>'
+      + '<p class="footer">' + (cfg.siteName || "悦音") + '</p></div>\n</body>\n</html>';
     await ghUpload(ghPath(code + "/index.html"), {
       message: "song page " + code,
-      content: encodeB64(songRedirectHtml(code)),
+      content: encodeB64(html),
       branch: cfg.branch
     }, null);
   }
-  // 确保某首歌拥有数字编号与专属页面（首次点「链接」时自动补建）
+  // 确保某首歌拥有数字编号与独立页面（首次点「链接」时自动补建）
   async function ensureSongPage(s) {
     const code = await generateUniqueCode();
-    await createSongPage(code);
+    await createSongPage(code, s);
     await updateIndex((d) => {
       const x = (d.songs || []).find((y) => y.id === s.id);
       if (x) x.code = code;
