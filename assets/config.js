@@ -14,6 +14,9 @@ window.SITE_CONFIG = {
   patEnc: {"salt":"fD7oSfPIZMdH6L5espkFVg==","iv":"OCacDyzseAha9A3k","data":"511sCaO7Ao74cAIewMy8ENzQgPZDrRGM71mIEO/kCHvvCyczLJMqL4mGpcHmhYGgbI8Q13TLwpI="},
   contact: "如需下载「客户音乐」，请联系管理员获取",
   maxFileMB: 19,                       // 免费 CDN 单文件上限，建议 MP3 格式
+  // 客户音乐“专属链接”模式：不在首页列表展示，后台可为每首生成专属链接供分享
+  // 改为 false 可恢复“客户音乐在首页列表展示”
+  hideCustomerFromList: true,
   cats: [
     { key: "customer", label: "客户音乐", cls: "c-customer" },
     { key: "bgm",      label: "背景音乐", cls: "c-bgm" },
