@@ -5,8 +5,13 @@
   const $ = (s) => document.querySelector(s);
   const audio = $("#audio");
   const player = $("#player");
-  // 单曲专属链接模式：index.html?song=曲目ID 时只展示这一首
-  const focusId = new URLSearchParams(location.search).get("song") || "";
+  // 单曲专属链接模式：
+  // ① index.html?song=曲目ID
+  // ② 独立页地址（如 /music/126598 或 /music/126598/index.html）
+  const pathMatch = location.pathname.match(/(?:^|\/)(\d{5,8})(?:\/index\.html)?\/?$/);
+  const focusId = new URLSearchParams(location.search).get("song") || (pathMatch ? pathMatch[1] : "");
+  // 由 <编号>/index.html 生成的独立页，静态资源在上一级目录
+  const relBase = window.SONG_PAGE_BASE || "";
 
   let songs = [];
   let curCat = cfg.hideCustomerFromList ? "bgm" : "customer";
@@ -53,7 +58,7 @@
   async function load() {
     const grid = $("#grid");
     try {
-      const res = await fetch("index.json?t=" + Date.now());
+      const res = await fetch(relBase + "index.json?t=" + Date.now());
       if (!res.ok) throw new Error("HTTP " + res.status);
       const data = await res.json();
       songs = (data.songs || []).sort((a, b) => b.up - a.up);
