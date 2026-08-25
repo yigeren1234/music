@@ -1,23 +1,27 @@
-<!DOCTYPE html><html lang="zh-CN"><head>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>大颗核桃 | 悦音</title>
-<style>*{margin:0;padding:0;box-sizing:border-box}
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
 body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0b0d12;color:#eef1f6;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;padding:20px}
-.c{width:100%;max-width:400px;background:#141a24;border-radius:20px;padding:36px 28px;text-align:center;border:1px solid rgba(255,255,255,.08);box-shadow:0 20px 60px rgba(0,0,0,.4)}
-.i{font-size:42px;margin-bottom:14px}
+.card{width:100%;max-width:400px;background:#141a24;border-radius:20px;padding:36px 28px;text-align:center;border:1px solid rgba(255,255,255,.08);box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.icon{font-size:42px;margin-bottom:16px}
 h1{font-size:21px;font-weight:700;margin-bottom:6px}
-.m{color:#8f99ab;font-size:14px;margin-bottom:24px}
-.bp{display:block;width:100%;padding:15px;border:none;border-radius:14px;background:linear-gradient(135deg,#e8b45a,#d68a3c);color:#221708;font-size:17px;font-weight:700;cursor:pointer;margin-bottom:10px;font-family:inherit}
-.bd{display:block;width:100%;padding:15px;border:none;border-radius:14px;background:rgba(232,180,90,.15);border:1px solid rgba(232,180,90,.35);color:#e8b45a;text-decoration:none;font-size:16px;font-weight:600}
-.f{margin-top:20px;color:#5b6472;font-size:12px}
-</style></head><body>
-<div class="c"><div style="font-size:42px;margin-bottom:14px">🎵</div>
+.meta{color:#8f99ab;font-size:14px;margin-bottom:26px}
+.btn-dl{display:block;width:100%;padding:18px;border:none;border-radius:14px;background:linear-gradient(135deg,#e8b45a,#d68a3c);color:#221708;font-size:18px;font-weight:700;text-decoration:none;transition:.2s}
+.btn-dl:hover{background:#d6a54a;transform:translateY(-2px)}
+.footer{margin-top:26px;color:#5b6472;font-size:12px}
+</style>
+</head>
+<body>
+<div class="card">
+<div style="font-size:42px;margin-bottom:16px">🎵</div>
 <h1>大颗核桃</h1>
-<p class="m">0:38 · 3.2MB</p>
-<button id="pb" onclick="var a=document.getElementById('aud'),b=this;if(a.paused){a.play();b.innerHTML='⏸ 暂停'}else{a.pause();b.innerHTML='▶ 播放'}" style="display:block;width:100%;padding:15px;border:none;border-radius:14px;background:#e8b45a;color:#221708;font-size:17px;font-weight:700;cursor:pointer;font-family:inherit">▶ 播放</button>
-<a href="https://cdn.jsdelivr.net/gh/yigeren1234/music@main/music/mt9actqx-o7cf0.wav" download="大颗核桃.mp3" style="display:block;width:100%;padding:15px;border:none;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);color:#eef1f6;text-decoration:none;font-size:16px;font-weight:600;margin-top:10px">⬇ 下载文件</a>
-<audio id="aud" preload="none"></audio>
-<p class="f">Powered by 悦音</p></div>
-<script>var a=document.getElementById('aud'),pb=document.getElementById('pb');a.src='https://cdn.jsdelivr.net/gh/yigeren1234/music@main/music/mt9actqx-o7cf0.wav';a.onplay=function(){pb.textContent='⏸ 暂停'};a.onpause=function(){pb.textContent='▶ 播放'};</script>
-</body></html>
+<p class="meta">3.2MB · MP3 · 点击下方按钮立即下载</p>
+<a href="https://cdn.jsdelivr.net/gh/yigeren1234/music@main/music/mt9actqx-o7cf0.wav" download="大颗核桃.mp3" style="display:block;width:100%;padding:18px;border:none;border-radius:14px;background:linear-gradient(135deg,#e8b45a,#d68a3c);color:#221708;font-size:18px;font-weight:700;text-decoration:none;font-family:inherit;margin-top:10px">⬇ 点击下载</a>
+<p class="footer">Powered by 悦音</p></div>
+</body>
+</html>
