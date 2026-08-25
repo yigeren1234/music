@@ -33,6 +33,8 @@
   const extOf = (f) => { const i = String(f).lastIndexOf("."); return i >= 0 ? String(f).slice(i) : ""; };
   const catOf = (k) => (cfg.cats.find((c) => c.key === k) || cfg.cats[0]);
   const byId = (id) => songs.find((s) => s.id === id);
+  // 单曲链接可能传入 内部ID 或 数字编号，两者都能找到
+  const findSong = (key) => songs.find((s) => s.id === key || s.code === key);
   let toastTimer = null;
   function toast(msg) {
     const old = $(".toast"); if (old) old.remove();
@@ -94,7 +96,7 @@
   function renderGrid() {
     const grid = $("#grid");
     const list = focusMode
-      ? songs.filter((s) => s.id === focusId)
+      ? songs.filter((s) => s.id === focusId || s.code === focusId)
       : songs.filter((s) => s.cat === curCat && !(cfg.hideCustomerFromList && s.cat === "customer"));
     $("#notice").hidden = true;
     if (!list.length) {
