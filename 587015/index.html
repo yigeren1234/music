@@ -6,49 +6,45 @@
 <title>大颗核桃 | 悦音</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0b0d12;color:#eef1f6;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;padding:20px}
+body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0b0d12;color:#eef1f6;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;padding:20px}
 .card{width:100%;max-width:400px;background:#141a24;border-radius:20px;padding:40px 28px;text-align:center;border:1px solid rgba(255,255,255,.08);box-shadow:0 20px 60px rgba(0,0,0,.4)}
-.icon{font-size:48px;margin-bottom:18px}
-h1{font-size:22px;font-weight:700;margin-bottom:8px}
+.cover{width:80px;height:80px;margin:0 auto 20px;background:linear-gradient(135deg,#1a2a45,#152642);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px}
+h1{font-size:22px;font-weight:700;margin-bottom:8px;word-break:break-all}
+.cat{display:inline-block;padding:3px 14px;border-radius:99px;background:rgba(232,180,90,.15);color:#e8b45a;font-size:13px;margin-bottom:20px}
 .meta{color:#8f99ab;font-size:14px;margin-bottom:30px}
-.btn-dl{display:block;width:100%;padding:20px;border:none;border-radius:16px;background:linear-gradient(135deg,#e8b45a,#d68a3c);color:#221708;font-size:19px;font-weight:700;text-decoration:none;font-family:inherit;cursor:pointer;transition:.2s;letter-spacing:1px}
-.btn-dl:hover{background:#d6a54a;transform:translateY(-2px);box-shadow:0 8px 25px rgba(232,180,90,.35)}
-.btn-dl:active{transform:translateY(0)}
-.status{color:#5b6472;font-size:13px;margin-top:14px;min-height:18px}
-.footer{margin-top:26px;color:#5b6472;font-size:12px}
+.btn-play{display:block;width:100%;padding:16px;border:none;border-radius:16px;background:linear-gradient(135deg,#e8b45a,#d68a3c);color:#221708;font-size:18px;font-weight:700;cursor:pointer;margin-bottom:14px;font-family:inherit;transition:.2s}
+.btn-play:hover{background:#d6a54a;transform:translateY(-2px)}
+.btn-play:active{transform:translateY(0)}
+.btn-dl{display:block;width:100%;padding:16px;border:none;border-radius:16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);color:#eef1f6;text-decoration:none;font-size:16px;font-weight:600;cursor:pointer;transition:.2s}
+.btn-dl:hover{background:rgba(255,255,255,.12)}
+.progress{height:4px;background:rgba(255,255,255,.08);border-radius:2px;margin-top:16px;overflow:hidden;display:none}
+.progress-fill{height:100%;background:#e8b45a;border-radius:2px;width:0%}
+.footer{margin-top:28px;color:#5b6472;font-size:12px}
 </style>
 </head>
 <body>
 <div class="card">
-<div style="font-size:48px;margin-bottom:18px">🎵</div>
+<div class="cover">🎵</div>
 <h1>大颗核桃</h1>
-<p class="meta">3.2MB · MP3 · 点击下方按钮立即保存到手机/电脑</p>
-<button class="btn-dl" id="dlBtn" data-audio="https://cdn.jsdelivr.net/gh/yigeren1234/music@main/music/mt9actqx-o7cf0.wav" data-filename="大颗核桃.mp3" onclick="doDownload(this)">⬇ 立即下载</button>
-<p class="status" id="dlStatus"></p>
-<p class="footer">Powered by 悦音</p></div>
+<span class="cat">客户音乐</span>
+<p class="meta">0:38 · 3.2MB</p>
+<button class="btn-play" onclick="var a=document.getElementById('aud');if(a.paused){a.play();this.textContent='⏸ 暂停播放'}else{a.pause();this.textContent='▶ 点击播放'}">▶ 点击播放</button>
+<button class="btn-dl" onclick="dl(this)" data-url="https://cdn.jsdelivr.net/gh/yigeren1234/music@main/music/mt9actqx-o7cf0.wav" data-name="大颗核桃.mp3">⬇ 下载到设备</button>
+<div class="progress" id="prog"><div class="progress-fill" id="pf"></div></div>
+<audio id="aud" src="https://cdn.jsdelivr.net/gh/yigeren1234/music@main/music/mt9actqx-o7cf0.wav" preload="none"></audio>
+<p class="footer">Powered by 悦音</p>
+</div>
 <script>
-function doDownload(btn){
-  var url=btn.getAttribute("data-audio");
-  var name=btn.getAttribute("data-filename");
-  var st=document.getElementById("dlStatus");
-  btn.disabled=true;st.textContent="正在准备文件…";
-  var x=new XMLHttpRequest();
-  x.open("GET",url,true);
-  x.responseType="blob";
-  x.onprogress=function(e){if(e.lengthComputable){var p=Math.round(e.loaded/e.total*100);st.textContent="下载中 "+p+"%";}};
-  x.onload=function(){
-    if(x.status===200){
-      var b=new Blob([x.response],{type:"audio/mpeg"});
-      var u=URL.createObjectURL(b);
-      var a=document.createElement("a");a.href=u;a.download=name;
-      document.body.appendChild(a);a.click();a.remove();
-      setTimeout(function(){URL.revokeObjectURL(u)},5000);
-      st.textContent="已开始下载 ✓";btn.disabled=false;
-    }else{st.textContent="下载失败，请重试";btn.disabled=false;}
-  };
-  x.onerror=function(){st.textContent="网络错误，请重试";btn.disabled=false;};
-  x.send();
-}
+var aud=document.getElementById("aud"),pb=document.querySelector(".btn-play");
+aud.onplay=function(){pb.textContent="⏸ 暂停播放"};
+aud.onpause=function(){pb.textContent="▶ 继续播放"};
+aud.onended=function(){pb.textContent="▶ 再听一遍"};
+function dl(btn){
+ var url=btn.getAttribute("data-url"),name=btn.getAttribute("data-name");
+ btn.style.opacity=".6";btn.innerHTML="正在准备…";
+ fetch(url).then(function(r){if(!r.ok)throw new Error(r.status);return r.blob()})
+ .then(function(b){var u=URL.createObjectURL(b);var a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(u);a.remove()},3000);btn.style.opacity="1";btn.innerHTML="⬇ 已开始下载";setTimeout(function(){btn.innerHTML="⬇ 下载到设备"},2000)})
+ .catch(function(e){btn.style.opacity="1";btn.innerHTML="下载失败，点击重试"})}
 </script>
 </body>
 </html>
