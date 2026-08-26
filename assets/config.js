@@ -16,7 +16,7 @@ window.SITE_CONFIG = {
   maxFileMB: 19,                       // 免费 CDN 单文件上限，建议 MP3 格式
   // 客户音乐“专属链接”模式：不在首页列表展示，后台可为每首生成专属链接供分享
   // 改为 false 可恢复“客户音乐在首页列表展示”
-  hideCustomerFromList: false,
+  hideCustomerFromList: true,
   cats: [
     { key: "customer", label: "客户音乐", cls: "c-customer" },
     { key: "bgm",      label: "客户配音二", cls: "c-bgm" },
