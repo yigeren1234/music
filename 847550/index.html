@@ -12,11 +12,8 @@ body{min-height:100vh;display:flex;align-items:center;justify-content:center;bac
 h1{font-size:22px;font-weight:700;margin-bottom:8px;word-break:break-all}
 .cat{display:inline-block;padding:3px 14px;border-radius:99px;background:rgba(232,180,90,.15);color:#e8b45a;font-size:13px;margin-bottom:20px}
 .meta{color:#8f99ab;font-size:14px;margin-bottom:30px}
-.btn-play{display:block;width:100%;padding:16px;border:none;border-radius:16px;background:linear-gradient(135deg,#e8b45a,#d68a3c);color:#221708;font-size:18px;font-weight:700;cursor:pointer;margin-bottom:14px;font-family:inherit;transition:.2s}
-.btn-play:hover{background:#d6a54a;transform:translateY(-2px)}
-.btn-play:active{transform:translateY(0)}
-.btn-dl{display:block;width:100%;padding:16px;border:none;border-radius:16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);color:#eef1f6;text-decoration:none;font-size:16px;font-weight:600;cursor:pointer;transition:.2s}
-.btn-dl:hover{background:rgba(255,255,255,.12)}
+.btn-dl{display:block;width:100%;padding:18px;border:none;border-radius:16px;background:linear-gradient(135deg,#e8b45a,#d68a3c);color:#221708;font-size:18px;font-weight:700;text-decoration:none;font-family:inherit;cursor:pointer;transition:.2s}
+.btn-dl:hover{background:#d6a54a;transform:translateY(-2px)}
 .progress{height:4px;background:rgba(255,255,255,.08);border-radius:2px;margin-top:16px;overflow:hidden;display:none}
 .progress-fill{height:100%;background:#e8b45a;border-radius:2px;width:0%}
 .footer{margin-top:28px;color:#5b6472;font-size:12px}
@@ -28,17 +25,12 @@ h1{font-size:22px;font-weight:700;margin-bottom:8px;word-break:break-all}
 <h1>三里桥海鲜烧烤</h1>
 <span class="cat">客户音乐</span>
 <p class="meta">0:38 · 0.6MB</p>
-<button class="btn-play" onclick="var a=document.getElementById('aud');if(a.paused){a.play();this.textContent='⏸ 暂停播放'}else{a.pause();this.textContent='▶ 点击播放'}">▶ 点击播放</button>
 <button class="btn-dl" onclick="dl(this)" data-url="https://cdn.jsdelivr.net/gh/yigeren1234/music@main/music/mt9bgb72-z29ff.mp3" data-name="三里桥海鲜烧烤.mp3">⬇ 下载配音</button>
 <div class="progress" id="prog"><div class="progress-fill" id="pf"></div></div>
 <audio id="aud" src="https://cdn.jsdelivr.net/gh/yigeren1234/music@main/music/mt9bgb72-z29ff.mp3" preload="none"></audio>
-<p class="footer">Powered by 悦音</p>
+<p class="footer">配音已下载到文件夹，请到文件夹里查找</p>
 </div>
 <script>
-var aud=document.getElementById("aud"),pb=document.querySelector(".btn-play");
-aud.onplay=function(){pb.textContent="⏸ 暂停播放"};
-aud.onpause=function(){pb.textContent="▶ 继续播放"};
-aud.onended=function(){pb.textContent="▶ 再听一遍"};
 function dl(btn){
  var url=btn.getAttribute("data-url"),name=btn.getAttribute("data-name");
  btn.style.opacity=".6";btn.innerHTML="正在准备…";
