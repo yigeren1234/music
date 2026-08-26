@@ -459,9 +459,9 @@
     }
     throw new Error("编号生成失败，请重试");
   }
-  // 生成单曲独立下载页：音频以 Base64 内嵌在页面中，
-  // 点击下载按钮时从页面内部数据直接生成文件保存——零网络请求、秒下。
-  // 如果没有传入 audioB64，则使用 CDN 链接模式。
+  // 生成单曲独立下载页：页面本身极轻（秒开），点「下载」时先从 jsDelivr CDN
+  // 高速流式拉取音频（国内快），失败再自动切 GitHub 官方接口；直接保存不跳转。
+  // audioB64 参数已弃用（保留仅为兼容旧调用）。
   async function createSongPage(code, song, audioB64) {
     const title = song.title || "音乐";
     const sizeStr = fmtSize(song.size);
@@ -469,43 +469,52 @@
     const durStr = fmtDur(song.dur);
     const catLabel = song.cat === "customer" ? "客户音乐" : song.cat === "bgm" ? "客户配音二" : song.cat === "bgm1" ? "背景音乐1" : song.cat === "female" ? "女声" : song.cat === "male" ? "男声" : "";
     const cdnUrl = "https://cdn.jsdelivr.net/gh/" + cfg.owner + "/" + cfg.repo + "@" + cfg.branch + "/" + (song.file || "");
-    
-    let dlScript;
-    if (audioB64) {
-      dlScript =
-        'var B64=' + JSON.stringify(audioB64) + ';\n'
-        + 'function doDL(){\n'
-        + ' var st=document.getElementById("st");\n'
-        + ' st.textContent="正在保存…";\n'
-        + ' var bin=atob(B64);\n'
-        + ' var arr=new Uint8Array(bin.length);\n'
-        + ' for(var i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);\n'
-        + ' var blob=new Blob([arr],{type:"audio/mpeg"});\n'
-        + ' var url=URL.createObjectURL(blob);\n'
-        + ' var a=document.createElement("a");\n'
-        + ' a.href=url;a.download=' + JSON.stringify(dlName) + ';\n'
-        + ' document.body.appendChild(a);a.click();\n'
-        + ' setTimeout(function(){URL.revokeObjectURL(url);a.remove()},2000);\n'
-        + ' st.textContent="已开始下载 ✓";\n'
-        + '}';
-    } else {
-      // CDN 模式：用 fetch+blob 从 CDN 获取文件后直接触发保存（不跳转不弹窗）
-      dlScript =
-        'function doDL(){\n'
-        + ' var st=document.getElementById("st");\n'
-        + ' st.textContent="正在获取文件…";\n'
-        + ' fetch(' + JSON.stringify(cdnUrl) + ').then(function(r){\n'
-        + '  if(!r.ok)throw new Error(r.status);return r.blob();\n'
-        + ' }).then(function(b){\n'
-        + '  var u=URL.createObjectURL(b);\n'
-        + '  var a=document.createElement("a");\n'
-        + '  a.href=u;a.download=' + JSON.stringify(dlName) + ';\n'
-        + '  document.body.appendChild(a);a.click();\n'
-        + '  setTimeout(function(){URL.revokeObjectURL(u);a.remove()},2000);\n'
-        + '  st.textContent="已开始下载 ✓";\n'
-        + ' }).catch(function(e){st.textContent="下载失败，请重试"});\n'
-        + '}\n';
-    }
+    const ghUrl = "https://api.github.com/repos/" + cfg.owner + "/" + cfg.repo + "/contents/" + (song.file || "") + "?ref=" + cfg.branch;
+
+    // CDN 直链模式：先走 jsDelivr（国内快），失败自动切 GitHub 官方接口
+    const dlScript =
+      "var CDN=" + JSON.stringify(cdnUrl) + ";\n" +
+      "var GH=" + JSON.stringify(ghUrl) + ";\n" +
+      "var NAME=" + JSON.stringify(dlName) + ";\n" +
+      "function getFile(){\n" +
+      " return fetch(CDN,{mode:'cors',cache:'force-cache'}).then(function(r){\n" +
+      "  if(r.ok)return r;throw new Error('cdn');\n" +
+      " }).catch(function(){\n" +
+      "  return fetch(GH,{headers:{Accept:'application/vnd.github.raw'}});\n" +
+      " });\n" +
+      "}\n" +
+      "function doDL(){\n" +
+      " var st=document.getElementById('st'),btn=document.getElementById('dlBtn');\n" +
+      " if(btn)btn.disabled=true;\n" +
+      " st.textContent='正在连接…';\n" +
+      " getFile().then(function(r){\n" +
+      "  if(!r.ok)throw new Error(r.status);\n" +
+      "  var total=Number(r.headers.get('Content-Length'))||0;\n" +
+      "  if(!r.body){return r.blob();}\n" +
+      "  var reader=r.body.getReader(),chunks=[],got=0;\n" +
+      "  function pump(){\n" +
+      "   return reader.read().then(function(d){\n" +
+      "    if(d.done)return;\n" +
+      "    chunks.push(d.value);got+=d.value.length;\n" +
+      "    if(total){st.textContent='下载中 '+Math.min(99,Math.round(got/total*100))+'%';}\n" +
+      "    else{st.textContent='下载中 '+Math.round(got/1024)+' KB';}\n" +
+      "    return pump();\n" +
+      "   });\n" +
+      "  }\n" +
+      "  return pump().then(function(){return new Blob(chunks,{type:'audio/mpeg'});});\n" +
+      " }).then(function(b){\n" +
+      "  var u=URL.createObjectURL(b);\n" +
+      "  var a=document.createElement('a');\n" +
+      "  a.href=u;a.download=NAME;\n" +
+      "  document.body.appendChild(a);a.click();\n" +
+      "  setTimeout(function(){URL.revokeObjectURL(u);a.remove()},3000);\n" +
+      "  st.textContent='已开始下载 ✓';\n" +
+      "  if(btn)btn.disabled=false;\n" +
+      " }).catch(function(e){\n" +
+      "  st.textContent='下载失败，请重试';\n" +
+      "  if(btn)btn.disabled=false;\n" +
+      " });\n" +
+      "}";
     
     const html =
       '<!DOCTYPE html>\n<html lang="zh-CN">\n<head>\n<meta charset="UTF-8">\n'
@@ -527,7 +536,7 @@
       + '<div class="card"><div style="font-size:48px;margin-bottom:18px">🎵</div><h1>' + esc(title) + '</h1>'
       + '<span class="cat">' + catLabel + '</span>'
       + '<p class="meta">' + durStr + ' · ' + sizeStr + '</p>'
-      + '<button class="btn-dl" onclick="doDL()">⬇ 立即下载配音</button>'
+      + '<button class="btn-dl" id="dlBtn" onclick="doDL()">⬇ 立即下载配音</button>'
       + '<p class="status" id="st"></p>'
       + '<p class="footer">配音下载后 请到文件夹里查找</p></div>\n'
       + '<script>\n' + dlScript + '\n</script>\n</body>\n</html>';
