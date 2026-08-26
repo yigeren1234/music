@@ -29,7 +29,7 @@ h1{font-size:22px;font-weight:700;margin-bottom:8px;word-break:break-all}
 <span class="cat">客户音乐</span>
 <p class="meta">0:38 · 3.2MB</p>
 <button class="btn-play" onclick="var a=document.getElementById('aud');if(a.paused){a.play();this.textContent='⏸ 暂停播放'}else{a.pause();this.textContent='▶ 点击播放'}">▶ 点击播放</button>
-<button class="btn-dl" onclick="dl(this)" data-url="https://cdn.jsdelivr.net/gh/yigeren1234/music@main/music/mt9actqx-o7cf0.wav" data-name="大颗核桃.mp3">⬇ 下载到设备</button>
+<button class="btn-dl" onclick="dl(this)" data-url="https://cdn.jsdelivr.net/gh/yigeren1234/music@main/music/mt9actqx-o7cf0.wav" data-name="大颗核桃.mp3">⬇ 下载配音</button>
 <div class="progress" id="prog"><div class="progress-fill" id="pf"></div></div>
 <audio id="aud" src="https://cdn.jsdelivr.net/gh/yigeren1234/music@main/music/mt9actqx-o7cf0.wav" preload="none"></audio>
 <p class="footer">Powered by 悦音</p>
@@ -43,7 +43,7 @@ function dl(btn){
  var url=btn.getAttribute("data-url"),name=btn.getAttribute("data-name");
  btn.style.opacity=".6";btn.innerHTML="正在准备…";
  fetch(url).then(function(r){if(!r.ok)throw new Error(r.status);return r.blob()})
- .then(function(b){var u=URL.createObjectURL(b);var a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(u);a.remove()},3000);btn.style.opacity="1";btn.innerHTML="⬇ 已开始下载";setTimeout(function(){btn.innerHTML="⬇ 下载到设备"},2000)})
+ .then(function(b){var u=URL.createObjectURL(b);var a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(u);a.remove()},3000);btn.style.opacity="1";btn.innerHTML="⬇ 已开始下载";setTimeout(function(){btn.innerHTML="⬇ 下载配音"},2000)})
  .catch(function(e){btn.style.opacity="1";btn.innerHTML="下载失败，点击重试"})}
 </script>
 </body>
