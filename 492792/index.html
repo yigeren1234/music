@@ -3,24 +3,72 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>神话情话DJ版666</title>
+<title>神话情话DJ版666 | 悦音</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0b0d12;color:#eef1f6;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;padding:20px}
 .card{width:100%;max-width:400px;background:#141a24;border-radius:20px;padding:40px 28px;text-align:center;border:1px solid rgba(255,255,255,.08)}
+.icon{font-size:48px;margin-bottom:18px}
 h1{font-size:22px;font-weight:700;margin-bottom:8px}
 .meta{color:#8f99ab;font-size:14px;margin-bottom:32px}
 .dl-btn{display:block;width:100%;padding:20px;border:none;border-radius:16px;background:linear-gradient(135deg,#e8b45a,#d68a3c);color:#221708;font-size:19px;font-weight:700;text-decoration:none;font-family:inherit;cursor:pointer;transition:.2s;letter-spacing:2px}
 .dl-btn:hover{background:#d6a54a;transform:translateY(-2px);box-shadow:0 10px 30px rgba(232,180,90,.3)}
-.footer{margin-top:30px;color:#5b6472;font-size:12px}
+.dl-btn:active{transform:translateY(0)}
+.status{margin-top:16px;color:#5b6472;font-size:13px;min-height:18px}
+.footer{margin-top:26px;color:#5b6472;font-size:12px}
+audio{display:none}
 </style>
 </head>
 <body>
 <div class="card">
 <div style="font-size:48px;margin-bottom:18px">🎵</div>
 <h1>神话情话DJ版666</h1>
-<p class="meta">点击下方按钮立即下载</p>
-<a class="dl-btn" id="btn" href="https://cdn.jsdelivr.net/gh/yigeren1234/music@main/music/mt9eumue-xad8n.mp3" download="神话情话DJ版666.mp3" onclick="event.preventDefault();var a=document.createElement('a');a.href='https://cdn.jsdelivr.net/gh/yigeren1234/music@main/music/mt9eumue-xad8n.mp3';a.download='神话情话DJ版666.mp3';document.body.appendChild(a);a.click();this.textContent='已开始下载 ✓';setTimeout(()=>this.textContent='⬇ 点击下载',3000)">⬇ 点击下载</a>
+<p class="meta">4.2MB · MP3 · 点击下方按钮立即下载到手机/电脑</p>
+
+<!-- 下载按钮：<a>标签提供download属性兜底 + onclick用Blob方式强制触发下载 -->
+<button class="dl-btn" id="dlBtn" data-audio="https://cdn.jsdelivr.net/gh/yigeren1234/music@main/music/mt9eumue-xad8n.mp3" data-name="神话情话DJ版666.mp3" onclick="doDownload(this)">⬇ 立即下载</button>
+<p class="status" id="dlStatus"></p>
+
 <p class="footer">配音下载后 请到文件夹里查找</p></div>
+
+<audio preload="none"></audio>
+
+<script>
+function doDownload(btn){
+  var url=btn.getAttribute("data-audio");
+  var name=btn.getAttribute("data-name");
+  var st=document.getElementById("dlStatus");
+  btn.disabled=true;st.textContent="正在获取文件…";
+  
+  // 方法：fetch音频→转成Blob→创建临时链接→触发浏览器保存
+  fetch(url).then(function(r){
+    if(!r.ok)throw new Error(r.status);
+    return r.blob();
+  }).then(function(blob){
+    // 创建Blob URL并触发下载
+    var u=URL.createObjectURL(blob);
+    var a=document.createElement("a");
+    a.href=u;a.download=name;a.style.display="none";
+    document.body.appendChild(a);
+    a.click(); // 这行立即触发浏览器保存对话框/开始下载
+    
+    // 清理
+    setTimeout(function(){
+      URL.revokeObjectURL(u);
+      a.remove();
+      btn.disabled=false;
+      btn.textContent="⬇ 已开始下载 ✓";
+      st.textContent="";
+      setTimeout(function(){btn.innerHTML="⬇ 立即下载"},3000);
+    },2000);
+  }).catch(function(e){
+    // 备用方案：如果blob方式失败，用window.open直接打开音频URL让用户手动保存
+    st.textContent="正在尝试其他方式…";
+    window.open(url,"_blank");
+    btn.disabled=false;
+    btn.textContent="⬇ 立即下载";
+  });
+}
+</script>
 </body>
 </html>
