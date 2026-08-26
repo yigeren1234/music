@@ -3,20 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>神话情话DJ版666 | 悦音</title>
+<title>神话情话DJ版666</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0b0d12;color:#eef1f6;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;padding:20px}
-.card{width:100%;max-width:420px;background:#141a24;border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:36px 28px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4)}
-.icon{width:72px;height:72px;margin:0 auto 18px;background:#1a2a45;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:32px}
-h1{font-size:21px;font-weight:700;margin-bottom:8px}
-.meta{color:#8f99ab;font-size:14px;margin-bottom:26px}
-.btn-dl{display:block;width:100%;padding:18px;border:none;border-radius:14px;background:linear-gradient(135deg,#e8b45a,#d68a3c);color:#221708;font-size:18px;font-weight:700;text-decoration:none;font-family:inherit;cursor:pointer}
-.btn-dl:hover{background:#d6a54a}
-.footer{margin-top:26px;color:#5b6472;font-size:12px}
+body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0b0d12;color:#eef1f6;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;padding:20px}
+.card{width:100%;max-width:400px;background:#141a24;border-radius:20px;padding:40px 28px;text-align:center;border:1px solid rgba(255,255,255,.08)}
+h1{font-size:22px;font-weight:700;margin-bottom:8px}
+.meta{color:#8f99ab;font-size:14px;margin-bottom:32px}
+.dl-btn{display:block;width:100%;padding:20px;border:none;border-radius:16px;background:linear-gradient(135deg,#e8b45a,#d68a3c);color:#221708;font-size:19px;font-weight:700;text-decoration:none;font-family:inherit;cursor:pointer;transition:.2s;letter-spacing:2px}
+.dl-btn:hover{background:#d6a54a;transform:translateY(-2px);box-shadow:0 10px 30px rgba(232,180,90,.3)}
+.footer{margin-top:30px;color:#5b6472;font-size:12px}
 </style>
 </head>
 <body>
-<div class="card"><div class="icon">🎵</div><h1>神话情话DJ版666</h1><p class="meta">4.2 MB</p><a class="btn-dl" href="https://cdn.jsdelivr.net/gh/yigeren1234/music@main/music/mt9eumue-xad8n.mp3?download=1" download="神话情话DJ版666.mp3" onclick="this.textContent='正在准备下载…';setTimeout(()=>{this.innerHTML='⬇ 点击重新下载</a>'},3000)">⬇ 点击下载</a><audio id="aud" src="https://cdn.jsdelivr.net/gh/yigeren1234/music@main/music/mt9eumue-xad8n.mp3" preload="none"></audio><p class="footer">配音下载后 请到文件夹里查找</p></div>
+<div class="card">
+<div style="font-size:48px;margin-bottom:18px">🎵</div>
+<h1>神话情话DJ版666</h1>
+<p class="meta">点击下方按钮立即下载</p>
+<a class="dl-btn" id="btn" href="https://cdn.jsdelivr.net/gh/yigeren1234/music@main/music/mt9eumue-xad8n.mp3" download="神话情话DJ版666.mp3" onclick="event.preventDefault();var a=document.createElement('a');a.href='https://cdn.jsdelivr.net/gh/yigeren1234/music@main/music/mt9eumue-xad8n.mp3';a.download='神话情话DJ版666.mp3';document.body.appendChild(a);a.click();this.textContent='已开始下载 ✓';setTimeout(()=>this.textContent='⬇ 点击下载',3000)">⬇ 点击下载</a>
+<p class="footer">配音下载后 请到文件夹里查找</p></div>
 </body>
 </html>
