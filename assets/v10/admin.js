@@ -1,7 +1,7 @@
 /* ============ 悦音 · 后台管理脚本 ============ */
 (function () {
   "use strict";
-  const APP_VER = "v9";
+  const APP_VER = "v10";
   const cfg = window.SITE_CONFIG;
   const IS_LOCAL = cfg.isLocal;
   const $ = (s) => document.querySelector(s);
@@ -191,7 +191,7 @@
             '<div class="row-meta">' + fmtDur(s.dur) + " · " + fmtSize(s.size) + " · " + fmtDate(s.up) + "</div>" +
           "</div>" +
           '<div class="row-actions">' +
-            '<button class="btn btn-ghost btn-sm" data-link="' + esc(s.id) + '">' + ICONS.link + " 链接</button>" +
+            '<button class="btn btn-ghost btn-sm" data-link="' + esc(s.id) + '">' + ICONS.link + " 复制链接</button>" +
             '<button class="btn btn-ghost btn-sm" data-ren="' + esc(s.id) + '">' + ICONS.edit + " 改名</button>" +
             '<button class="btn btn-ghost btn-sm" data-dl="' + esc(s.id) + '">' + ICONS.download + " 下载</button>" +
             '<button class="btn btn-danger btn-sm" data-del="' + esc(s.id) + '">' + ICONS.trash + " 删除</button>" +
@@ -410,7 +410,7 @@
         setUploading(true, "生成专属链接…");
         try {
           code = await generateUniqueCode();
-          await createSongPage(code);
+          await createSongPage(code, { title: title.slice(0, 200), cat, file: filePath, size: f.size, dur: Math.round(pickDur || 0) }, b64);
         } catch (e2) { code = null; /* 稍后点「链接」时会自动补建 */ }
         setUploading(true, "更新曲库…");
         await updateIndex((d) => {
@@ -459,29 +459,91 @@
     }
     throw new Error("编号生成失败，请重试");
   }
-  // 生成单曲独立页：一个极简跳转页，指向主站的单曲视图
-  // （这样以后主站升级，所有短链都自动使用最新逻辑）
-  function songRedirectHtml(code) {
-    const target = "../index.html?song=" + code;
-    return '<!DOCTYPE html>\n<html lang="zh-CN">\n<head>\n<meta charset="UTF-8">\n'
-      + '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
-      + '<meta name="robots" content="noindex">\n<title>正在打开…</title>\n'
-      + '<meta http-equiv="refresh" content="0;url=' + target + '">\n'
-      + '</head>\n<body style="margin:0;height:100vh;display:flex;align-items:center;justify-content:center;background:#0b0d12;color:#eef1f6;font-family:-apple-system,sans-serif">'
-      + '正在打开音乐… <a style="color:#e8b45a;margin-left:10px" href="' + target + '">点此进入</a>'
-      + '<script>location.replace(' + JSON.stringify(target) + ');</script>\n</body>\n</html>';
-  }
-  async function createSongPage(code) {
+  // 生成单曲独立下载页：音频以 Base64 内嵌在页面中，
+  // 点击下载按钮时从页面内部数据直接生成文件保存——零网络请求、秒下。
+  // 如果没有传入 audioB64，则使用 CDN 链接模式。
+  async function createSongPage(code, song, audioB64) {
+    const title = song.title || "音乐";
+    const sizeStr = fmtSize(song.size);
+    const dlName = (title || "music").replace(/[\\/:*?"<>|]/g, "") + "." + (song.file || ".mp3").split(".").pop();
+    const durStr = fmtDur(song.dur);
+    const catLabel = song.cat === "customer" ? "客户音乐" : song.cat === "bgm" ? "背景音乐" : song.cat === "female" ? "女声" : song.cat === "male" ? "男声" : "";
+    const cdnUrl = "https://cdn.jsdelivr.net/gh/" + cfg.owner + "/" + cfg.repo + "@" + cfg.branch + "/" + (song.file || "");
+    
+    let dlScript;
+    if (audioB64) {
+      dlScript =
+        'var B64=' + JSON.stringify(audioB64) + ';\n'
+        + 'function doDL(){\n'
+        + ' var st=document.getElementById("st");\n'
+        + ' st.textContent="正在保存…";\n'
+        + ' var bin=atob(B64);\n'
+        + ' var arr=new Uint8Array(bin.length);\n'
+        + ' for(var i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);\n'
+        + ' var blob=new Blob([arr],{type:"audio/mpeg"});\n'
+        + ' var url=URL.createObjectURL(blob);\n'
+        + ' var a=document.createElement("a");\n'
+        + ' a.href=url;a.download="' + JSON.stringify(dlName.replace(/"/g, "")) + '";\n'
+        + ' document.body.appendChild(a);a.click();\n'
+        + ' setTimeout(function(){URL.revokeObjectURL(url);a.remove()},2000);\n'
+        + ' st.textContent="已开始下载 ✓";\n'
+        + '}';
+    } else {
+      // CDN 模式：用 fetch+blob 从 CDN 获取文件后直接触发保存（不跳转不弹窗）
+      dlScript =
+        '<script>\n'
+        + 'function doDL(){\n'
+        + ' var st=document.getElementById("st");\n'
+        + ' st.textContent="正在获取文件…";\n'
+        + ' fetch(' + JSON.stringify(cdnUrl) + ').then(function(r){\n'
+        + '  if(!r.ok)throw new Error(r.status);return r.blob();\n'
+        + ' }).then(function(b){\n'
+        + '  var u=URL.createObjectURL(b);\n'
+        + '  var a=document.createElement("a");\n'
+        + '  a.href=u;a.download="' + JSON.stringify(dlName.replace(/"/g, "")) + '";\n'
+        + '  document.body.appendChild(a);a.click();\n'
+        + '  setTimeout(function(){URL.revokeObjectURL(u);a.remove()},2000);\n'
+        + '  st.textContent="已开始下载 ✓";\n'
+        + ' }).catch(function(e){st.textContent="下载失败，请重试"});\n'
+        + '}\n'
+        + '</script>\n';
+    }
+    
+    const html =
+      '<!DOCTYPE html>\n<html lang="zh-CN">\n<head>\n<meta charset="UTF-8">\n'
+      + '<meta name="viewport" content="width=device-width,initial-scale=1">\n'
+      + '<title>' + esc(title) + ' | ' + (cfg.siteName || "悦音") + '</title>\n<style>\n'
+      + '*{margin:0;padding:0;box-sizing:border-box}\n'
+      + 'body{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0b0d12;color:#eef1f6;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;padding:20px}\n'
+      + '.card{width:100%;max-width:420px;background:#141a24;border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:40px 28px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.4)}\n'
+      + '.icon{font-size:48px;margin-bottom:18px}\n'
+      + 'h1{font-size:22px;font-weight:700;margin-bottom:8px;word-break:break-all}\n'
+      + '.cat{display:inline-block;padding:4px 16px;border-radius:99px;background:rgba(232,180,90,.15);color:#e8b45a;font-size:13px;margin-bottom:12px}\n'
+      + '.meta{color:#8f99ab;font-size:14px;margin-bottom:32px}\n'
+      + '.btn-dl{display:block;width:100%;padding:20px;border:none;border-radius:16px;background:linear-gradient(135deg,#e8b45a,#d68a3c);color:#221708;font-size:19px;font-weight:700;font-family:inherit;cursor:pointer;letter-spacing:2px;transition:.2s}\n'
+      + '.btn-dl:hover{background:#d6a54a;transform:translateY(-2px);box-shadow:0 10px 30px rgba(232,180,90,.35)}\n'
+      + '.btn-dl:active{transform:translateY(0)}\n'
+      + '.status{margin-top:14px;color:#5b6472;font-size:13px;min-height:18px}\n'
+      + '.footer{margin-top:24px;color:#5b6472;font-size:12px}\n'
+      + '</style>\n</head>\n<body>\n'
+      + '<div class="card"><div style="font-size:48px;margin-bottom:18px">🎵</div><h1>' + esc(title) + '</h1>'
+      + '<span class="cat">' + catLabel + '</span>'
+      + '<p class="meta">' + durStr + ' · ' + sizeStr + '</p>'
+      + '<button class="btn-dl" onclick="doDL()">⬇ 立即下载配音</button>'
+      + '<p class="status" id="st"></p>'
+      + '<p class="footer">配音下载后 请到文件夹里查找</p></div>\n'
+      + '<script>\n' + dlScript + '\n</script>\n</body>\n</html>';
+      
     await ghUpload(ghPath(code + "/index.html"), {
       message: "song page " + code,
-      content: encodeB64(songRedirectHtml(code)),
+      content: encodeB64(html),
       branch: cfg.branch
     }, null);
   }
-  // 确保某首歌拥有数字编号与专属页面（首次点「链接」时自动补建）
+  // 确保某首歌拥有数字编号与独立页面（首次点「链接」时自动补建）
   async function ensureSongPage(s) {
     const code = await generateUniqueCode();
-    await createSongPage(code);
+    await createSongPage(code, s); // 无 audioB64 → 使用 CDN 链接模式
     await updateIndex((d) => {
       const x = (d.songs || []).find((y) => y.id === s.id);
       if (x) x.code = code;
