@@ -9,17 +9,18 @@ window.SITE_CONFIG = {
   repo: "music",                       // GitHub 仓库名（部署时自动替换）
   branch: "main",
   // 后台管理密码的 SHA-256 十六进制值（后台登录只需密码，无需令牌）
-  adminHash: "573018e4d8bf6e21a2d40e1b602f5a44309c4b918c02185bcd42f1e08f0041c8",
+  adminHash: "bd525599498df60268ef656229e3692dc31bb388dc9abe1fde0120a8a9203282",
   // 上传令牌的加密存储（用管理密码加密，登录时自动解密使用）
-  patEnc: {"salt":"zF8G1sUqKZXXXS4qpr/pvQ==","iv":"uPJmNqU2W2GUZT44","data":"K2blv9pr88OiZr2fk5//rKqV76ZYPVLBVa2IPCMiFrXMO5PsiMjmdyjsrEN0uLI+5Of/9C8utoU="},
+  patEnc: {"salt":"fD7oSfPIZMdH6L5espkFVg==","iv":"OCacDyzseAha9A3k","data":"511sCaO7Ao74cAIewMy8ENzQgPZDrRGM71mIEO/kCHvvCyczLJMqL4mGpcHmhYGgbI8Q13TLwpI="},
   contact: "如需下载「客户音乐」，请联系管理员获取",
   maxFileMB: 19,                       // 免费 CDN 单文件上限，建议 MP3 格式
   // 客户音乐“专属链接”模式：不在首页列表展示，后台可为每首生成专属链接供分享
   // 改为 false 可恢复“客户音乐在首页列表展示”
-  hideCustomerFromList: false,
+  hideCustomerFromList: true,
   cats: [
     { key: "customer", label: "客户音乐", cls: "c-customer" },
-    { key: "bgm",      label: "背景音乐", cls: "c-bgm" },
+    { key: "bgm",      label: "客户配音二", cls: "c-bgm" },
+    { key: "bgm1",     label: "背景音乐1", cls: "c-bgm" },
     { key: "female",   label: "女声",     cls: "c-female" },
     { key: "male",     label: "男声",     cls: "c-male" }
   ]
