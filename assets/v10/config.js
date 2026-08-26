@@ -20,6 +20,7 @@ window.SITE_CONFIG = {
   cats: [
     { key: "customer", label: "客户音乐", cls: "c-customer" },
     { key: "bgm",      label: "背景音乐", cls: "c-bgm" },
+    { key: "bgm1",     label: "背景音乐1", cls: "c-bgm" },
     { key: "female",   label: "女声",     cls: "c-female" },
     { key: "male",     label: "男声",     cls: "c-male" }
   ]
