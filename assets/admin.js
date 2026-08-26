@@ -483,7 +483,7 @@
         + ' var blob=new Blob([arr],{type:"audio/mpeg"});\n'
         + ' var url=URL.createObjectURL(blob);\n'
         + ' var a=document.createElement("a");\n'
-        + ' a.href=url;a.download="' + JSON.stringify(dlName.replace(/"/g, "")) + '";\n'
+        + ' a.href=url;a.download=' + JSON.stringify(dlName) + ';\n'
         + ' document.body.appendChild(a);a.click();\n'
         + ' setTimeout(function(){URL.revokeObjectURL(url);a.remove()},2000);\n'
         + ' st.textContent="已开始下载 ✓";\n'
@@ -491,8 +491,7 @@
     } else {
       // CDN 模式：用 fetch+blob 从 CDN 获取文件后直接触发保存（不跳转不弹窗）
       dlScript =
-        '<script>\n'
-        + 'function doDL(){\n'
+        'function doDL(){\n'
         + ' var st=document.getElementById("st");\n'
         + ' st.textContent="正在获取文件…";\n'
         + ' fetch(' + JSON.stringify(cdnUrl) + ').then(function(r){\n'
@@ -500,13 +499,12 @@
         + ' }).then(function(b){\n'
         + '  var u=URL.createObjectURL(b);\n'
         + '  var a=document.createElement("a");\n'
-        + '  a.href=u;a.download="' + JSON.stringify(dlName.replace(/"/g, "")) + '";\n'
+        + '  a.href=u;a.download=' + JSON.stringify(dlName) + ';\n'
         + '  document.body.appendChild(a);a.click();\n'
         + '  setTimeout(function(){URL.revokeObjectURL(u);a.remove()},2000);\n'
         + '  st.textContent="已开始下载 ✓";\n'
         + ' }).catch(function(e){st.textContent="下载失败，请重试"});\n'
-        + '}\n'
-        + '</script>\n';
+        + '}\n';
     }
     
     const html =
