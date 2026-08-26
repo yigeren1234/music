@@ -467,7 +467,7 @@
     const sizeStr = fmtSize(song.size);
     const dlName = (title || "music").replace(/[\\/:*?"<>|]/g, "") + "." + (song.file || ".mp3").split(".").pop();
     const durStr = fmtDur(song.dur);
-    const catLabel = song.cat === "customer" ? "客户音乐" : song.cat === "bgm" ? "客户配音二" : song.cat === "female" ? "女声" : song.cat === "male" ? "男声" : "";
+    const catLabel = song.cat === "customer" ? "客户音乐" : song.cat === "bgm" ? "客户配音二" : song.cat === "bgm1" ? "背景音乐1" : song.cat === "female" ? "女声" : song.cat === "male" ? "男声" : "";
     const cdnUrl = "https://cdn.jsdelivr.net/gh/" + cfg.owner + "/" + cfg.repo + "@" + cfg.branch + "/" + (song.file || "");
     
     let dlScript;
