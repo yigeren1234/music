@@ -14,7 +14,7 @@
   const relBase = window.SONG_PAGE_BASE || "";
 
   let songs = [];
-  let curCat = cfg.hideCustomerFromList ? "bgm" : "customer";
+  let curCat = "customer";
   let playingId = null;
   let focusMode = false; // 单曲专属链接模式
 
@@ -126,7 +126,7 @@
     const grid = $("#grid");
     const list = focusMode
       ? songs.filter((s) => s.id === focusId || s.code === focusId)
-      : songs.filter((s) => s.cat === curCat && !(cfg.hideCustomerFromList && s.cat === "customer"));
+      : songs.filter((s) => s.cat === curCat);
     $("#notice").hidden = true;
     let shareBar = "";
     // 单曲专属页：顶部显示标准短链（避免与跳转后的长地址混淆）
@@ -343,12 +343,7 @@
     a.addEventListener("click", () => setCat(a.getAttribute("data-cat")))
   );
   // 客户音乐专属链接模式：首页不展示该栏目入口与曲目
-  if (cfg.hideCustomerFromList) {
-    document
-      .querySelectorAll('.tab[data-cat="customer"], .topnav a[data-cat="customer"]')
-      .forEach((el) => { el.style.display = "none"; });
-  }
-
+  
   $("#brandName").textContent = cfg.siteName;
   $("#footerName").textContent = cfg.siteName;
   $("#heroSub").textContent = cfg.siteSub || $("#heroSub").textContent;
