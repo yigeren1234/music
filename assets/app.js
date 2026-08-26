@@ -14,7 +14,7 @@
   const relBase = window.SONG_PAGE_BASE || "";
 
   let songs = [];
-  let curCat = "customer";
+  let curCat = cfg.hideCustomerFromList ? "bgm" : "customer";
   let playingId = null;
   let focusMode = false; // 单曲专属链接模式
 
@@ -70,17 +70,36 @@
   async function load() {
     const grid = $("#grid");
     try {
-      const res = await fetch(relBase + "index.json?t=" + Date.now());
+      let res = await fetch(relBase + "index.json?t=" + Date.now());
       if (!res.ok) throw new Error("HTTP " + res.status);
-      const data = await res.json();
+      let data = await res.json();
       songs = (data.songs || []).sort((a, b) => b.up - a.up);
       // 单曲专属链接模式
       if (focusId) {
         focusMode = true;
         document.body.classList.add("focus-mode");
+        // 若主数据源暂时没同步到这首（CDN 缓存延迟），自动改用 GitHub 实时接口再找一次
+        if (!findSong(focusId)) {
+          try {
+            const freshUrl =
+              "https://api.github.com/repos/" + cfg.owner + "/" + cfg.repo +
+              "/contents/index.json?ref=" + cfg.branch;
+            const r2 = await fetch(freshUrl, { headers: { Accept: "application/vnd.github+json" } });
+            if (r2.ok) {
+              const j2 = await r2.json();
+              const decoded = JSON.parse(
+                decodeURIComponent(escape(atob(String(j2.content).replace(/\s/g, ""))))
+              );
+              songs = (decoded.songs || []).sort((a, b) => b.up - a.up);
+            }
+          } catch (e2) { /* 保持原结果 */ }
+        }
         const song = byId(focusId);
         if (!song) {
-          grid.innerHTML = '<div class="loading">曲目不存在或已被删除</div>';
+          grid.innerHTML =
+            '<div class="loading">该音乐已下架或链接已更新<br>' +
+            (cfg.contact || "") +
+            '<br><span style="font-size:13px;opacity:.7">请向商家索取最新的音乐链接</span></div>';
           return;
         }
         document.title = song.title + " · " + cfg.siteName;
@@ -107,13 +126,26 @@
     const grid = $("#grid");
     const list = focusMode
       ? songs.filter((s) => s.id === focusId || s.code === focusId)
-      : songs.filter((s) => s.cat === curCat);
+      : songs.filter((s) => s.cat === curCat && !(cfg.hideCustomerFromList && s.cat === "customer"));
     $("#notice").hidden = true;
+    let shareBar = "";
+    // 单曲专属页：顶部显示标准短链（避免与跳转后的长地址混淆）
+    if (focusMode && list.length && !cfg.isLocal && cfg.pagesBase) {
+      const code = list[0].code || focusId;
+      const shortUrl = cfg.pagesBase + code;
+      shareBar =
+        '<div class="share-bar">' +
+          '<span class="share-label">本页分享链接</span>' +
+          '<code class="share-url">' + esc(shortUrl) + "</code>" +
+          '<button class="btn btn-accent btn-sm" id="copyShare">复制</button>' +
+        "</div>";
+    }
+    let cardsHtml = "";
     if (!list.length) {
-      grid.innerHTML = '<div class="loading">本栏目暂无音乐，敬请期待</div>';
+      grid.innerHTML = shareBar + '<div class="loading">本栏目暂无音乐，敬请期待</div>';
       return;
     }
-    grid.innerHTML = list.map((s) => {
+    cardsHtml = list.map((s) => {
       const isPlaying = playingId === s.id;
       const icon = ICONS[s.cat] || ICONS.bgm;
       return (
@@ -137,12 +169,26 @@
       );
     }).join("");
 
+    grid.innerHTML = shareBar + cardsHtml;
+
     grid.querySelectorAll("[data-play]").forEach((b) => {
       b.addEventListener("click", () => play(b.getAttribute("data-play")));
     });
     grid.querySelectorAll("[data-dl]").forEach((b) => {
       b.addEventListener("click", () => download(b.getAttribute("data-dl"), b));
     });
+    const cp = document.getElementById("copyShare");
+    if (cp) {
+      cp.addEventListener("click", async () => {
+        const code = (list[0] && (list[0].code || focusId)) || focusId;
+        const url = cfg.pagesBase + code;
+        let ok = false;
+        try { await navigator.clipboard.writeText(url); ok = true; } catch (e) { /* 降级 */ }
+        if (ok) { cp.textContent = "已复制 ✓"; }
+        else window.prompt("请手动复制：", url);
+        setTimeout(() => { cp.textContent = "复制"; }, 2000);
+      });
+    }
   }
 
   /* ---------- 分类切换 ---------- */
@@ -297,7 +343,12 @@
     a.addEventListener("click", () => setCat(a.getAttribute("data-cat")))
   );
   // 客户音乐专属链接模式：首页不展示该栏目入口与曲目
-  
+  if (cfg.hideCustomerFromList) {
+    document
+      .querySelectorAll('.tab[data-cat="customer"], .topnav a[data-cat="customer"]')
+      .forEach((el) => { el.style.display = "none"; });
+  }
+
   $("#brandName").textContent = cfg.siteName;
   $("#footerName").textContent = cfg.siteName;
   $("#heroSub").textContent = cfg.siteSub || $("#heroSub").textContent;
