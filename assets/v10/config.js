@@ -4,7 +4,7 @@
  * ============================================================ */
 window.SITE_CONFIG = {
   siteName: "悦音",
-  siteSub: "背景音乐 · 女声 · 男声 · 客户音乐 —— 在线试听，一键下载",
+  siteSub: "客户配音二 · 女声 · 男声 · 客户音乐 —— 在线试听，一键下载",
   owner: "yigeren1234",      // GitHub 用户名（部署时自动替换）
   repo: "music",                       // GitHub 仓库名（部署时自动替换）
   branch: "main",
@@ -19,7 +19,7 @@ window.SITE_CONFIG = {
   hideCustomerFromList: true,
   cats: [
     { key: "customer", label: "客户音乐", cls: "c-customer" },
-    { key: "bgm",      label: "背景音乐", cls: "c-bgm" },
+    { key: "bgm",      label: "客户配音二", cls: "c-bgm" },
     { key: "bgm1",     label: "背景音乐1", cls: "c-bgm" },
     { key: "female",   label: "女声",     cls: "c-female" },
     { key: "male",     label: "男声",     cls: "c-male" }
