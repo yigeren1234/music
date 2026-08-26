@@ -26,16 +26,18 @@ var B64="//qSYNJ/AAAB6SS/YGMSUEVGt+wYY1oHfLknYxhLQP0TJKyUiSgOSOSN93SHCd4kIRuaUWE
 function doDL(){
  var st=document.getElementById("st");
  st.textContent="正在保存…";
- var bin=atob(B64);
- var arr=new Uint8Array(bin.length);
- for(var i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
- var blob=new Blob([arr],{type:"audio/mpeg"});
- var url=URL.createObjectURL(blob);
- var a=document.createElement("a");
- a.href=url;a.download=""0820金秋换新节配乐版.mp3"";
- document.body.appendChild(a);a.click();
- setTimeout(function(){URL.revokeObjectURL(url);a.remove()},2000);
- st.textContent="已开始下载 ✓";
+ try{
+  var bin=atob(B64);
+  var arr=new Uint8Array(bin.length);
+  for(var i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
+  var blob=new Blob([arr],{type:"audio/mpeg"});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement("a");
+  a.href=url;a.download="0820金秋换新节配乐版.mp3";
+  document.body.appendChild(a);a.click();
+  setTimeout(function(){URL.revokeObjectURL(url);a.remove()},2000);
+  st.textContent="已开始下载 ✓";
+ }catch(e){st.textContent="下载失败，请重试"}
 }
 </script>
 </body>
