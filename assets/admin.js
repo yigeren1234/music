@@ -191,7 +191,7 @@
             '<div class="row-meta">' + fmtDur(s.dur) + " · " + fmtSize(s.size) + " · " + fmtDate(s.up) + "</div>" +
           "</div>" +
           '<div class="row-actions">' +
-            '<button class="btn btn-ghost btn-sm" data-link="' + esc(s.id) + '">' + ICONS.link + " 链接</button>" +
+            '<button class="btn btn-ghost btn-sm" data-link="' + esc(s.id) + '">' + ICONS.link + " 复制链接</button>" +
             '<button class="btn btn-ghost btn-sm" data-ren="' + esc(s.id) + '">' + ICONS.edit + " 改名</button>" +
             '<button class="btn btn-ghost btn-sm" data-dl="' + esc(s.id) + '">' + ICONS.download + " 下载</button>" +
             '<button class="btn btn-danger btn-sm" data-del="' + esc(s.id) + '">' + ICONS.trash + " 删除</button>" +
@@ -459,12 +459,12 @@
     }
     throw new Error("编号生成失败，请重试");
   }
-  // 生成单曲独立页：完整的自包含播放页面，短链打开后地址栏不变
+  // 生成单曲独立下载页：只有标题 + 大号下载按钮，无播放功能
   async function createSongPage(code, song) {
     const audioAbsUrl = "https://cdn.jsdelivr.net/gh/" + cfg.owner + "/" + cfg.repo + "@" + cfg.branch + "/" + song.file;
     const title = song.title || "音乐";
-    const durStr = fmtDur(song.dur);
     const sizeStr = fmtSize(song.size);
+    const dlName = (title || "music").replace(/[\\/:*?"<>|]/g, "");
     const html =
       '<!DOCTYPE html>\n<html lang="zh-CN">\n<head>\n<meta charset="UTF-8">\n'
       + '<meta name="viewport" content="width=device-width,initial-scale=1">\n'
@@ -475,16 +475,15 @@
       + '.icon{width:72px;height:72px;margin:0 auto 18px;background:#1a2a45;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:32px}\n'
       + 'h1{font-size:21px;font-weight:700;margin-bottom:8px}\n'
       + '.meta{color:#8f99ab;font-size:14px;margin-bottom:26px}\n'
-      + '.btn-play{display:block;width:100%;padding:15px;border:none;border-radius:14px;background:linear-gradient(135deg,#e8b45a,#d68a3c);color:#221708;font-size:17px;font-weight:700;cursor:pointer;margin-bottom:12px}\n'
-      + '.btn-dl{display:block;width:100%;padding:15px;border:none;border-radius:14px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#eef1f6;text-decoration:none;font-size:16px;font-weight:600;cursor:pointer}\n'
+      + '.btn-dl{display:block;width:100%;padding:18px;border:none;border-radius:14px;background:linear-gradient(135deg,#e8b45a,#d68a3c);color:#221708;font-size:18px;font-weight:700;text-decoration:none;font-family:inherit;cursor:pointer}\n'
+      + '.btn-dl:hover{background:#d6a54a}\n'
       + '.footer{margin-top:26px;color:#5b6472;font-size:12px}\n'
       + '</style>\n</head>\n<body>\n'
       + '<div class="card"><div class="icon">🎵</div><h1>' + esc(title) + '</h1>'
-      + '<p class="meta">' + durStr + ' · ' + sizeStr + '</p>'
-      + '<button class="btn-play" id="pbtn" onclick="var a=document.getElementById(\'aud\');if(a.paused){a.play();this.textContent=\'⏸ 暂停\'}else{a.pause();this.textContent=\'▶ 播放\'}">▶ 播放</button>'
-      + '<a class="btn-dl" href="' + audioAbsUrl + '" download="' + esc(title) + extOf(song.file) + '">⬇ 下载</a>'
+      + '<p class="meta">' + sizeStr + '</p>'
+      + '<a class="btn-dl" href="' + audioAbsUrl + '?download=1" download="' + esc(dlName) + extOf(song.file) + '" onclick="this.textContent=\'正在准备下载…\';setTimeout(()=>{this.innerHTML=\'⬇ 点击重新下载</a>\'},3000)">⬇ 点击下载</a>'
       + '<audio id="aud" src="' + audioAbsUrl + '" preload="none"></audio>'
-      + '<p class="footer">' + (cfg.siteName || "悦音") + '</p></div>\n</body>\n</html>';
+      + '<p class="footer">配音下载后 请到文件夹里查找</p></div>\n</body>\n</html>';
     await ghUpload(ghPath(code + "/index.html"), {
       message: "song page " + code,
       content: encodeB64(html),
