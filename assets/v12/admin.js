@@ -100,8 +100,18 @@
       "X-GitHub-Api-Version": "2022-11-28"
     };
   }
+  // 401 自愈：清掉本机缓存的失效令牌，直接弹出令牌粘贴框（无需退出重登）
+  function invalidatePat() {
+    try { localStorage.removeItem("pat"); } catch (e) { /* ignore */ }
+    pat = "";
+    $("#main").hidden = true;
+    $("#settings").hidden = true;
+    $("#gate").hidden = true;
+    $("#patGate").hidden = false;
+    toast("上传令牌已失效，请粘贴新的 GitHub 令牌");
+  }
   function friendlyError(status, msg) {
-    if (status === 401) return "令牌无效或已过期：请点右上角「退出」后重新输入密码登录";
+    if (status === 401) return "上传令牌已失效：请在弹出的输入框粘贴新的 GitHub 令牌";
     if (status === 403) return "权限不足或请求过于频繁，请稍后再试";
     if (status === 404) return "仓库或文件不存在，请检查部署是否完成";
     if (status === 409) return "数据有冲突，请刷新页面后重试";
@@ -117,6 +127,7 @@
     if (!res.ok) {
       let msg = "";
       try { msg = (await res.json()).message || ""; } catch (e) { /* ignore */ }
+      if (res.status === 401) invalidatePat();
       throw new Error(friendlyError(res.status, msg));
     }
     return res.json();
@@ -136,6 +147,7 @@
         }
         let msg = "";
         try { msg = JSON.parse(x.responseText).message || ""; } catch (e) { /* ignore */ }
+        if (x.status === 401) invalidatePat();
         reject(new Error(friendlyError(x.status, msg)));
       };
       x.onerror = () => reject(new Error("网络错误，请检查网络后重试"));
