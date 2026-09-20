@@ -9,10 +9,10 @@ window.SITE_CONFIG = {
   repo: "music",                       // GitHub 仓库名（部署时自动替换）
   branch: "main",
   // 后台管理密码的 SHA-256 十六进制值（后台登录只需密码，无需令牌）
-  adminHash: "bd525599498df60268ef656229e3692dc31bb388dc9abe1fde0120a8a9203282",
+  adminHash: "8b2b857ce04ac73d00f5e1ed583ede094c9eba193cde0c375494ee09a359afd3",
   // 上传令牌的加密存储（用管理密码加密，登录时自动解密使用）
-  // 2026-09-20：内置令牌已失效并移除，改为登录后在本机粘贴令牌（存浏览器 localStorage）
-  patEnc: null,
+  // 2026-09-20 18:30：新令牌（永不过期）已用新管理密码加密内置，登录即自动解密，无需粘贴
+  patEnc: {"salt":"FwaDJm7bkVF0U7CSNJAJfw==","iv":"WXwgq9oci/RQrI2F","data":"8hYQeO0sJHxOTPmzIml6L9yA5aLdFvPTW2T2jaUm7GjTzy+gsDude03b16ngq0CnH943Qq4fn2E="},
   contact: "如需下载「客户音乐」，请联系管理员获取",
   maxFileMB: 19,                       // 免费 CDN 单文件上限，建议 MP3 格式
   // 客户音乐“专属链接”模式：不在首页列表展示，后台可为每首生成专属链接供分享
