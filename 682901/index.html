@@ -22,13 +22,17 @@ h1{font-size:22px;font-weight:700;margin-bottom:8px;word-break:break-all}
 <body>
 <div class="card"><div style="font-size:48px;margin-bottom:18px">🎵</div><h1>商品大清仓</h1><span class="cat">客户音乐</span><p class="meta">3:17 · 3085 KB</p><button class="btn-dl" id="dlBtn" onclick="doDL()">⬇ 立即下载配音</button><p class="status" id="st"></p><p class="footer">配音下载后 请到文件夹里查找</p></div>
 <script>
-var CDN="https://cdn.jsdelivr.net/gh/yigeren1234/music@main/music/mmwn944fy-nghag.mp3";
+var CDN="https://gcore.jsdelivr.net/gh/yigeren1234/music@main/music/mmwn944fy-nghag.mp3";
+var PAGES="https://yigeren1234.github.io/music/music/mmwn944fy-nghag.mp3";
 var GH="https://api.github.com/repos/yigeren1234/music/contents/music/mmwn944fy-nghag.mp3?ref=main";
 var NAME="商品大清仓.mp3";
+function tryU(u){
+ return fetch(u,{mode:'cors',cache:'force-cache'}).then(function(r){
+  if(r.ok)return r;throw new Error('x');
+ });
+}
 function getFile(){
- return fetch(CDN,{mode:'cors',cache:'force-cache'}).then(function(r){
-  if(r.ok)return r;throw new Error('cdn');
- }).catch(function(){
+ return tryU(CDN).catch(function(){return tryU(PAGES);}).catch(function(){
   return fetch(GH,{headers:{Accept:'application/vnd.github.raw'}});
  });
 }
